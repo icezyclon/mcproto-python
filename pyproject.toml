@@ -1,0 +1,67 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = [
+  "setuptools>=61",
+]
+
+[project]
+name = "mcproto"
+version = "1.18.2.1.1"
+description="Library for communicating with Minecraft servers via same-named grpc protobuf plugin"
+readme = "README.md"
+license = {text = "LGPL-3.0-or-later"}
+authors = [
+    {name = "Felix Wallner", email = "felix.wallner@protonmail.com"},
+]
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+  "grpcio",
+  "protobuf",
+]
+[project.optional-dependencies]
+dev = [
+  "black",
+  "build",
+  "grpcio-tools",
+  "isort",
+  "mypy",
+  "pre-commit",
+  "pytest",
+  "pytest-mock",
+  "types-protobuf",
+  "types-setuptools",
+]
+imagequantizer = [
+  "imageio",
+  "numpy",
+  "Pillow",
+  "scipy",
+]
+
+[tool.black]
+include = '\.pyi?$'
+line-length = 99
+
+[tool.isort]
+default_section = "THIRDPARTY"
+include_trailing_comma = true
+line_length = 99
+multi_line_output = 3
+profile = "black"
+
+# [tool.mypy]
+# check_untyped_defs = true
+# disallow_any_explicit = true
+# disallow_any_expr = true
+# disallow_any_generics = true
+# disallow_untyped_defs = true
+
+# [tool.flake8]
+# max-complexity = 10
+# max-line-length = 99

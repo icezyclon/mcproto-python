@@ -1,0 +1,10 @@
+black
+build
+grpcio-tools
+isort
+mypy
+pre-commit
+pytest
+pytest-mock
+types-protobuf 
+types-setuptools
