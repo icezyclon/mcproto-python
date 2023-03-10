@@ -8,6 +8,8 @@ This library is heavily inspired by [MCPI](https://github.com/martinohanlon/mcpi
 
 This library uses Protocol Buffers and the [gRPC](https://grpc.io/) library and protocols to communicate with the plugin on the server.
 
+Due to the use of the new type annotations **Python 3.10+** is required!
+
 ## Versions and Compatibility
 
 The versioning in this project looks a bit funny, but is very simple:

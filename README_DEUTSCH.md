@@ -8,6 +8,8 @@ Sie wurde dabei sehr von [MCPI](https://github.com/martinohanlon/mcpi) und desse
 
 Die Bibliothek verwendet dabei sogenannte Protocol Buffers und kommuniziert mittels der Bibliothek [gRPC](https://grpc.io/) und deren Protokollen mit dem Plugin auf dem Server.
 
+Wegen den neuen Python Features die im Projekt verwendet werden wird **Python 3.10+** benötigt!
+
 ## Versionen und Kompatibilität
 
 Die Versionierung dieser Bibliothek ist lustig aber sehr einfach:
