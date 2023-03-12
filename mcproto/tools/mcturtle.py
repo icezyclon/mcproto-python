@@ -29,6 +29,8 @@ class Turtle:
             self._world = self._mc.getWorldByKey(world)
         elif world is not None:
             raise TypeError("Argument world must be of type str or mcproto.World")
+        else:
+            self._world = None
 
         if pos is None:
             player = self._mc.getPlayer()
