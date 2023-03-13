@@ -111,6 +111,13 @@ class Entity(HasStub):
         self.runCommand("tp ~ -50000 ~")
         self.kill()
 
+    def giveEffect(
+        self, effect: str, seconds: int = -1, amplifier: int = 0, particles: bool = True
+    ) -> None:
+        seconds_or_inf = int(seconds) if seconds <= 0 else "infinite"
+        pbool = str(not bool(particles)).lower()
+        self.runCommand(f"effect give @s {effect} {seconds_or_inf} {amplifier} {pbool}")
+
     @property
     def loaded(self) -> bool:
         if self._should_update():

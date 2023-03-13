@@ -4,9 +4,9 @@ import time
 from functools import partial
 from typing import Literal
 
-from . import entity
 from ._base import HasStub, _PlayerProvider
 from ._util import ThreadSafeCachedKeyBasedFactory
+from .entity import Entity
 from .exception import raise_on_error
 from .mcpb import MinecraftStub
 from .mcpb import minecraft_pb2 as pb
@@ -17,36 +17,14 @@ CACHE_PLAYER_TIME = 0.2
 ALLOW_OFFLINE_PLAYER_OPS = True
 
 
-class Player(HasStub):
+class Player(Entity, HasStub):
     def __init__(self, stub: MinecraftStub, worldhub: _WorldHub, name: str) -> None:
-        super().__init__(stub)
         if not isinstance(name, str):
             raise TypeError("Player name must be of type str")
-        self._name = name
-        self._worldhub = worldhub
-
-        self._update_ts: float = 0.0
-        self._world: World = None
-        self._pos: Vec3 = Vec3()
-        self._pitch: float = 0.0
-        self._yaw: float = 0.0
-        self._online: bool = False
+        super().__init__(stub, worldhub, name)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name={self.name})"
-
-    def __eq__(self, __o: object) -> bool:
-        return isinstance(__o, type(self)) and self.name == __o.name
-
-    def __gt__(self, __o: object) -> bool:
-        if not isinstance(__o, type(self)):
-            raise TypeError(
-                f"'>' not supported between instances of '{type(self)}' and '{type(__o)}'"
-            )
-        return self.name > __o.name
-
-    def __hash__(self) -> int:
-        return hash((self.name,))
 
     def _should_update(self) -> bool:
         if time.time() - self._update_ts > CACHE_PLAYER_TIME:
@@ -62,13 +40,13 @@ class Player(HasStub):
         self._pitch = pb_player.location.orientation.pitch
         self._yaw = pb_player.location.orientation.yaw
         self._update_ts = time.time()
-        self._online = True
+        self._loaded = True
         return True
 
     def _update(self, allow_offline: bool = ALLOW_OFFLINE_PLAYER_OPS) -> bool:
         response = self._stub.getPlayers(pb.PlayerRequest(names=[self.name], withLocations=True))
         if allow_offline and response.status.code == pb.PLAYER_NOT_FOUND:
-            self._online = False  # do not update self._update_ts on purpose
+            self._loaded = False  # do not update self._update_ts on purpose
             return False
         raise_on_error(response.status)
         if len(response.players) > 0:
@@ -78,13 +56,11 @@ class Player(HasStub):
         else:
             raise RuntimeError("Player could not be updated and no error was raised by response")
 
-    def runCommand(self, command: str) -> None:
-        command = f"execute as {self.name} at @s run " + command
-        super().runCommand(command)
+    # functions working on entity but not player
+    def remove(self) -> None:
+        raise AttributeError("Remove cannot be used on a Player")
 
-    def kill(self) -> None:
-        self.runCommand("kill")
-
+    # functions only for players
     def gamemode(self, mode: Literal["adventure", "creative", "spectator", "survival"]) -> None:
         self.runCommand(f"gamemode {mode}")
 
@@ -99,6 +75,9 @@ class Player(HasStub):
 
     def survival(self) -> None:
         self.gamemode("survival")
+
+    def giveItems(self, type: str, amount: int = 1) -> None:
+        self.runCommand(f"give @s {type} {amount}")
 
     # server access commands cannot be executed via 'execute as ...'
     def kick(self) -> None:
@@ -116,16 +95,17 @@ class Player(HasStub):
     def deop(self) -> None:
         HasStub.runCommand(self, f"deop {self.name}")
 
+    # properties are NOT inherited from Entity
     @property
     def online(self) -> bool:
         if self._should_update():
             self._update(allow_offline=True)
             # TODO: online being True does not give any guarantees
-        return self._online
+        return self._loaded
 
     @property
     def name(self) -> str:
-        return self._name
+        return self._id
 
     @property
     def type(self) -> str:
@@ -242,11 +222,6 @@ class Player(HasStub):
         if not ALLOW_OFFLINE_PLAYER_OPS or response.code != pb.PLAYER_NOT_FOUND:
             raise_on_error(response)
         self._world = newworld
-
-    def getEntitiesAround(
-        self, distance: float, type: str | None = None, only_spawnable: bool = True
-    ) -> list[entity.Entity]:
-        return self.world.getEntitiesAround(self.pos, distance, type, only_spawnable)
 
 
 class _PlayerCache(_WorldHub, HasStub, _PlayerProvider):

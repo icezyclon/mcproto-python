@@ -306,6 +306,12 @@ class _DefaultWorld(HasStub, _EntityProvider):
             f"setblock {pos2.x} {pos2.y} {pos2.z} {color}_bed[part=head,facing={direction}]"
         )
 
+    def spawnItems(self, pos: Vec3, type: str, amount: int = 1) -> None:
+        pos = pos.floor()
+        self.runCommand(
+            f'summon item {pos.x} {pos.y} {pos.z} {{Item:{{id:"{type}", Count:{amount}}}}}'
+        )
+
 
 class World(_DefaultWorld, HasStub, _EntityProvider):
     def __init__(
