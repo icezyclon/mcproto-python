@@ -3,12 +3,12 @@ angewendet werden können.
 
 Dies funktioniert Beispielsweise für den Chat oder für Schilder.
 
->>> from mcproto.tools.text import *
+>>> from mcproto.text import *
 >>> mc.postToChat(ROT + FETT + "Hallo Python!" + RESET)
 
 oder
 
->>> from mcproto.tools import text
+>>> from mcproto import text
 >>> mc.postToChat(text.ROT + text.FETT + "Hallo Python!" + text.RESET)
 """
 

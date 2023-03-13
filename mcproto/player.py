@@ -10,6 +10,7 @@ from .entity import Entity
 from .exception import raise_on_error
 from .mcpb import MinecraftStub
 from .mcpb import minecraft_pb2 as pb
+from .nbt import NBT
 from .vec3 import Vec3
 from .world import World, _WorldHub
 
@@ -22,6 +23,21 @@ class Player(Entity, HasStub):
         if not isinstance(name, str):
             raise TypeError("Player name must be of type str")
         super().__init__(stub, worldhub, name)
+
+    @property
+    def name(self) -> str:
+        return self._id
+
+    @property
+    def type(self) -> str:
+        return "player"
+
+    @property
+    def online(self) -> bool:
+        if self._should_update():
+            self._update(allow_offline=True)
+            # TODO: online being True does not give any guarantees
+        return self._loaded
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name={self.name})"
@@ -76,8 +92,11 @@ class Player(Entity, HasStub):
     def survival(self) -> None:
         self.gamemode("survival")
 
-    def giveItems(self, type: str, amount: int = 1) -> None:
-        self.runCommand(f"give @s {type} {amount}")
+    def giveItems(self, type: str, amount: int = 1, nbt: NBT | None = None) -> None:
+        if nbt is None:
+            self.runCommand(f"give @s {type} {amount}")
+        else:
+            self.runCommand(f"give @s {type}{nbt} {amount}")
 
     # server access commands cannot be executed via 'execute as ...'
     def kick(self) -> None:
@@ -95,22 +114,7 @@ class Player(Entity, HasStub):
     def deop(self) -> None:
         HasStub.runCommand(self, f"deop {self.name}")
 
-    # properties are NOT inherited from Entity
-    @property
-    def online(self) -> bool:
-        if self._should_update():
-            self._update(allow_offline=True)
-            # TODO: online being True does not give any guarantees
-        return self._loaded
-
-    @property
-    def name(self) -> str:
-        return self._id
-
-    @property
-    def type(self) -> str:
-        return "player"
-
+    # properties that have different stub entpoints than entity
     @property
     def pos(self) -> Vec3:
         if self._should_update():

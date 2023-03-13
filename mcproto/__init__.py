@@ -5,14 +5,15 @@ try:
 except _metalib.PackageNotFoundError:
     __version__ = "0.0.0.0.0"
 
-
+from . import colors, text
 from .constants import *  # All Constants
 from .entity import Entity
 from .events import *  # All Events
 from .exception import *  # All Exceptions
 from .minecraft import Minecraft
+from .nbt import NBT
 from .player import Player
 from .vec3 import Vec3
 from .world import World
 
-__all__ = ["Minecraft", "Vec3"]
+__all__ = ["Minecraft", "Vec3", "NBT"]

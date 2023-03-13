@@ -4,10 +4,13 @@ import time
 from functools import partial
 
 from ._base import HasStub, _EntityProvider
+from ._types import COLOR
 from ._util import ThreadSafeCachedKeyBasedFactory
+from .colors import color_codes
 from .exception import raise_on_error
 from .mcpb import MinecraftStub
 from .mcpb import minecraft_pb2 as pb
+from .nbt import NBT
 from .vec3 import Vec3
 from .world import World, _WorldHub
 
@@ -111,12 +114,43 @@ class Entity(HasStub):
         self.runCommand("tp ~ -50000 ~")
         self.kill()
 
+    def getEntitiesAround(
+        self, distance: float, type: str | None = None, only_spawnable: bool = True
+    ) -> list[Entity]:
+        entities = self.world.getEntitiesAround(self.pos, distance, type, only_spawnable)
+        return [e for e in entities if e is not self]
+
     def giveEffect(
-        self, effect: str, seconds: int = -1, amplifier: int = 0, particles: bool = True
+        self, effect: str, seconds: int = 30, amplifier: int = 0, particles: bool = True
     ) -> None:
-        seconds_or_inf = int(seconds) if seconds <= 0 else "infinite"
         pbool = str(not bool(particles)).lower()
-        self.runCommand(f"effect give @s {effect} {seconds_or_inf} {amplifier} {pbool}")
+        self.runCommand(f"effect give @s {effect} {int(seconds)} {amplifier} {pbool}")
+
+    def replaceItem(self, where: str, item: str, amount: int = 1, nbt: NBT | None = None) -> None:
+        if nbt is None:
+            self.runCommand(f"item replace entity @s {where} with {item} {amount}")
+        else:
+            self.runCommand(f"item replace entity @s {where} with {item}{nbt} {amount}")
+
+    def replaceHelmet(
+        self,
+        armortype: str = "leather_helmet",
+        unbreakable: bool = True,
+        binding: bool = True,
+        vanishing: bool = False,
+        color: COLOR | None = None,
+        nbt: NBT | None = None,
+    ) -> None:
+        nbt = nbt or NBT()
+        if binding:
+            nbt.add_binding_curse()
+        if vanishing:
+            nbt.add_vanishing_curse()
+        if unbreakable:
+            nbt.set_unbreakable()
+        if color and color in color_codes:
+            nbt.get_or_create_nbt("display")["color"] = color_codes[color]
+        self.replaceItem("armor.head", armortype, nbt=nbt)
 
     @property
     def loaded(self) -> bool:
@@ -236,12 +270,6 @@ class Entity(HasStub):
         if not ALLOW_UNLOADED_ENTITY_OPS or response.code != pb.ENTITY_NOT_FOUND:
             raise_on_error(response)
         self._world = newworld
-
-    def getEntitiesAround(
-        self, distance: float, type: str | None = None, only_spawnable: bool = True
-    ) -> list[Entity]:
-        entities = self.world.getEntitiesAround(self.pos, distance, type, only_spawnable)
-        return [e for e in entities if e is not self]
 
 
 class _EntityCache(_WorldHub, HasStub, _EntityProvider):
