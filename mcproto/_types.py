@@ -1,6 +1,6 @@
 from typing import Literal, TypeAlias
 
-__all__ = ["CARDINAL", "DIRECTION"]
+__all__ = ["CARDINAL", "DIRECTION", "COLOR"]
 
 CARDINAL: TypeAlias = Literal["east", "south", "west", "north"]
 DIRECTION: TypeAlias = Literal[CARDINAL, "up", "down"]

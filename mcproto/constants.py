@@ -21,6 +21,8 @@ NORTH = "north"
 UP = "up"
 DOWN = "down"
 
+# Deutsche Bezeichnungen
+
 OST = EAST
 SÜD = SOUTH
 WEST = WEST
