@@ -155,6 +155,15 @@ class Entity(HasStub):
         self.replaceItem("armor.head", armortype, nbt=nbt)
 
     @property
+    def facing(self) -> Vec3:
+        yaw, pitch = self.orientation
+        return Vec3.from_yaw_pitch(yaw, pitch)
+
+    @facing.setter
+    def facing(self, direction: Vec3) -> None:
+        self.orientation = direction.yaw_pitch()
+
+    @property
     def loaded(self) -> bool:
         if self._should_update():
             self._update(allow_dead=True)

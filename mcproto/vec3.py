@@ -5,6 +5,8 @@ from dataclasses import asdict, dataclass
 from numbers import Number
 from typing import Any, Callable, Iterator, Union
 
+from ._types import CARDINAL, DIRECTION
+
 _NumType = Union[int, float]
 _NumVec = Union["Vec3", _NumType]
 
@@ -16,6 +18,25 @@ class Vec3:
     x: float = 0
     y: float = 0
     z: float = 0
+
+    @classmethod
+    def from_yaw_pitch(cls, yaw: _NumType = 0, pitch: _NumType = 0) -> Vec3:
+        """Build direction unit-vector from yaw and pitch.
+        yaw: -180..179.99 (-180/180 north, -90 east, 0 south, 90 west)
+        pitch -90..90 (-90 up, 0 straight, 90 down)"""
+        yawed = Vec3().south().rotate(Vec3().down(), yaw)
+        pitched = yawed.rotate(yawed.cross(Vec3().down()), pitch)
+        return pitched  # .norm()  # already normed
+
+    def yaw_pitch(self) -> tuple[float, float]:
+        """Return the yaw and pitch value from self as directional vector.
+        yaw: -180..179.99 (-180 north, -90 east, 0 south, 90 west)
+        pitch -90..90 (-90 up, 0 straight, 90 down)"""
+        if self.x == 0 and self.y == 0 and self.z == 0:
+            return 0.0, 0.0
+        yaw = -math.degrees(math.atan2(self.x, self.z))
+        pitch = math.degrees(math.atan2(math.sqrt(self.z**2 + self.x**2), self.y)) - 90.0
+        return yaw, pitch
 
     def __add__(self, v: _NumVec) -> Vec3:
         if isinstance(v, Number):
@@ -156,6 +177,37 @@ class Vec3:
 
     def asdict(self) -> dict[str, _NumType]:
         return asdict(self)
+
+    def closest_axis(self) -> Vec3:
+        greatest = max(self.map(abs))
+        if abs(self.x) == greatest:
+            return Vec3(x=self.x)
+        elif abs(self.y) == greatest:
+            return Vec3(y=self.y)
+        elif abs(self.z) == greatest:
+            return Vec3(z=self.z)
+        else:
+            return Vec3()
+
+    def direction_label(self) -> DIRECTION:
+        axis = self.closest_axis()
+        if axis.x > 0:
+            return "east"
+        elif axis.x < 0:
+            return "west"
+        elif axis.y > 0:
+            return "up"
+        elif axis.y < 0:
+            return "down"
+        elif axis.z > 0:
+            return "south"
+        elif axis.z < 0:
+            return "north"
+        else:
+            return "east"
+
+    def cardinal_label(self) -> CARDINAL:
+        return self.withY(0).direction_label()  # type: ignore
 
     def east(self, n: _NumType = 1) -> Vec3:
         return Vec3(self.x + n, self.y, self.z)
