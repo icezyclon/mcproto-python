@@ -56,6 +56,7 @@ class Turtle:
         self._show_head: bool = True
         self._penwidth: float = 1  # TODO: use
         self._batch_time: float = 0.0  # TODO: use
+        self._snap_grid: bool = False
 
         self._paint_head()
 
@@ -73,6 +74,9 @@ class Turtle:
         self.stift_absetzten = self.pendown
         self.verstecke_kopf = self.hidehead
         self.zeige_kopf = self.showhead
+        self.auf_raster = self.movegrid
+        self.ohne_raster = self.movefree
+        self.springe_zu = self.goto
 
         # Kürzel
         self.fd = self.forward
@@ -106,6 +110,19 @@ class Turtle:
         if self._show_head:
             self._set_block(self._head, self._body_pos)
 
+    @property
+    def pos(self) -> Vec3:
+        if self._snap_grid:
+            return self._pos.floor() + 0.5
+        return self._pos
+
+    def goto(self, new_position: Vec3) -> Turtle:
+        if self._show_head:
+            self._set_block("air", self._body_pos)
+        self._pos = new_position
+        self._paint_head()
+        return self
+
     def head(self, block: str) -> Turtle:
         self._head = block
         return self
@@ -126,7 +143,7 @@ class Turtle:
         wait = 1.0 / self._speed
         for _ in range(int(abs(by))):
             self._paint_body()
-            self._pos = self._pos + (self._dir_front * _sign(by))
+            self._pos = self.pos + (self._dir_front * _sign(by))
             self._paint_head()
             sleep(wait)
         return self
@@ -167,4 +184,12 @@ class Turtle:
     def showhead(self) -> Turtle:
         self._show_head = True
         self._set_block(self._head, self._body_pos)
+        return self
+
+    def movegrid(self) -> Turtle:
+        self._snap_grid = True
+        return self
+
+    def movefree(self) -> Turtle:
+        self._snap_grid = False
         return self
