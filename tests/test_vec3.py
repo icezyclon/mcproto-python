@@ -8,8 +8,15 @@ from mcproto import Vec3
 
 def close(a, b) -> bool:
     if isinstance(a, Number) and isinstance(b, Number):
-        return math.isclose(a, b, abs_tol=6)
-    return all(math.isclose(i, j, abs_tol=6) for i, j in zip(a, b, strict=True))
+        return math.isclose(a, b, abs_tol=10**-6)
+    return all(math.isclose(i, j, abs_tol=10**-6) for i, j in zip(a, b, strict=True))
+
+
+def test_close() -> None:
+    assert close(0.000001, 0)
+    assert not close(0.001, -0.001)
+    assert close(Vec3(), Vec3(0.000001, -0.000001))
+    assert not close(Vec3(), Vec3(0.001, -0.001))
 
 
 def test_eq() -> None:
@@ -406,3 +413,146 @@ def test_pow() -> None:
         v**0  # type: ignore
     with pytest.raises(TypeError):
         v**1  # type: ignore
+
+
+def test_cloest_axis() -> None:
+    assert Vec3().closest_axis() == Vec3()
+    assert Vec3(1, 1, 1).closest_axis() == Vec3(x=1)
+    assert Vec3(0, 1, 1).closest_axis() == Vec3(y=1)
+    assert Vec3(0, -0.5, 1).closest_axis() == Vec3(z=1)
+    assert Vec3(33.3, -4.5, 1).closest_axis() == Vec3(x=33.3)
+    assert Vec3(3.3, -4.5, 1).closest_axis() == Vec3(y=-4.5)
+    assert Vec3(3.3, -4.5, 10).closest_axis() == Vec3(z=10)
+
+
+def test_direction() -> None:
+    EAST, SOUTH, NORTH, WEST, UP, DOWN = "east", "south", "north", "west", "up", "down"
+    DEFAULT = EAST
+    v = Vec3()
+    assert v.cardinal_label() == v.direction_label() == DEFAULT
+    v = Vec3(1, 1, 1)
+    assert v.cardinal_label() == v.direction_label() == EAST  # default for plus
+    v = -Vec3(1, 1, 1)
+    assert v.cardinal_label() == v.direction_label() == WEST  # default for minus
+
+    v = Vec3().east()
+    assert v.cardinal_label() == v.direction_label() == EAST
+    v = Vec3().south()
+    assert v.cardinal_label() == v.direction_label() == SOUTH
+    v = Vec3().north()
+    assert v.cardinal_label() == v.direction_label() == NORTH
+    v = Vec3().west()
+    assert v.cardinal_label() == v.direction_label() == WEST
+    v = Vec3().up()
+    assert v.cardinal_label() == DEFAULT
+    assert v.direction_label() == UP
+    v = Vec3().down()
+    assert v.cardinal_label() == DEFAULT
+    assert v.direction_label() == DOWN
+
+    a, b = 1.33, 1.31
+    v = Vec3().east(a).up(b).south(b)
+    assert v.cardinal_label() == v.direction_label() == EAST
+    v = Vec3().east(b).up(b).south(a)
+    assert v.cardinal_label() == v.direction_label() == SOUTH
+    v = Vec3().east(b).up(b).south(-a)
+    assert v.cardinal_label() == v.direction_label() == NORTH
+    v = Vec3().east(-a).up(b).south(b)
+    assert v.cardinal_label() == v.direction_label() == WEST
+    v = Vec3().east(b).up(a).south(b)
+    assert v.cardinal_label() == DEFAULT
+    assert v.direction_label() == UP
+    v = Vec3().east(b).up(-a).south(b)
+    assert v.cardinal_label() == DEFAULT
+    assert v.direction_label() == DOWN
+
+
+def test_from_yaw_pitch() -> None:
+    # yaw: -180..179.99 (-180 north, -90 east, 0 south, 90 west)
+    # pitch -90..90 (-90 up, 0 straight, 90 down)
+    assert Vec3.from_yaw_pitch() == Vec3.from_yaw_pitch(0, 0)
+    assert close(Vec3.from_yaw_pitch(0, 0), Vec3().south())
+    assert close(Vec3.from_yaw_pitch(-90, 0), Vec3().east())
+    assert close(Vec3.from_yaw_pitch(-180, 0), Vec3().north())
+    assert close(Vec3.from_yaw_pitch(180, 0), Vec3().north())
+    assert close(Vec3.from_yaw_pitch(90, 0), Vec3().west())
+    assert close(Vec3.from_yaw_pitch(0, -90), Vec3().up())
+    assert close(Vec3.from_yaw_pitch(0, 90), Vec3().down())
+
+    assert close(Vec3.from_yaw_pitch(0, 45), Vec3().south().down().norm())
+    assert close(Vec3.from_yaw_pitch(-90, 45), Vec3().east().down().norm())
+    assert close(Vec3.from_yaw_pitch(-180, 45), Vec3().north().down().norm())
+    assert close(Vec3.from_yaw_pitch(180, 45), Vec3().north().down().norm())
+    assert close(Vec3.from_yaw_pitch(90, 45), Vec3().west().down().norm())
+
+    assert close(Vec3.from_yaw_pitch(0, -45), Vec3().south().up().norm())
+    assert close(Vec3.from_yaw_pitch(-90, -45), Vec3().east().up().norm())
+    assert close(Vec3.from_yaw_pitch(-180, -45), Vec3().north().up().norm())
+    assert close(Vec3.from_yaw_pitch(180, -45), Vec3().north().up().norm())
+    assert close(Vec3.from_yaw_pitch(90, -45), Vec3().west().up().norm())
+
+    assert close(Vec3.from_yaw_pitch(0, -90), Vec3().up())
+    assert close(Vec3.from_yaw_pitch(-90, -90), Vec3().up())
+    assert close(Vec3.from_yaw_pitch(-180, -90), Vec3().up())
+    assert close(Vec3.from_yaw_pitch(180, -90), Vec3().up())
+    assert close(Vec3.from_yaw_pitch(90, -90), Vec3().up())
+
+    assert close(Vec3.from_yaw_pitch(0, 90), Vec3().down())
+    assert close(Vec3.from_yaw_pitch(-90, 90), Vec3().down())
+    assert close(Vec3.from_yaw_pitch(-180, 90), Vec3().down())
+    assert close(Vec3.from_yaw_pitch(180, 90), Vec3().down())
+    assert close(Vec3.from_yaw_pitch(90, 90), Vec3().down())
+
+    assert close(Vec3.from_yaw_pitch(45, 0), Vec3().south().west().norm())
+    assert close(Vec3.from_yaw_pitch(-45, 0), Vec3().south().east().norm())
+    assert close(Vec3.from_yaw_pitch(-135, 0), Vec3().north().east().norm())
+    assert close(Vec3.from_yaw_pitch(135, 0), Vec3().north().west().norm())
+
+
+def test_yaw_pitch() -> None:
+    # yaw: -180..179.99 (-180 north, -90 east, 0 south, 90 west)
+    # pitch -90..90 (-90 up, 0 straight, 90 down)
+    def check_pair(a: float | int, b: float | int) -> None:
+        assert close(Vec3.from_yaw_pitch(a, b).yaw_pitch(), (a, b))
+
+    check_pair(0, 0)
+    check_pair(-90, 0)
+    check_pair(-180, 0)
+    check_pair(179.9, 0)
+    check_pair(90, 0)
+    check_pair(0, -90)
+    check_pair(0, 90)
+
+    check_pair(0, 45)
+    check_pair(-90, 45)
+    check_pair(-180, 45)
+    check_pair(179.9, 45)
+    check_pair(90, 45)
+    check_pair(45, -90)
+    check_pair(45, 90)
+
+    check_pair(0, -45)
+    check_pair(-90, -45)
+    check_pair(-180, -45)
+    check_pair(179.9, -45)
+    check_pair(90, -45)
+    check_pair(-45, -90)
+    check_pair(-45, 90)
+    check_pair(135, -90)
+    check_pair(-135, -90)
+    check_pair(-135, 90)
+    check_pair(135, 90)
+
+    for yaw in range(-180, 180):
+        for pitch in range(-89, 90):
+            # TODO: some bugs at pitch -90 and 90
+            check_pair(yaw, pitch)
+
+    assert Vec3().yaw_pitch() == (0, 0)
+    assert Vec3().up().yaw_pitch() == (0, -90)
+    assert Vec3().down().yaw_pitch() == (0, 90)
+    assert Vec3().east().yaw_pitch() == (-90, 0)
+    assert Vec3().south().yaw_pitch() == (0, 0)
+    assert Vec3().west().yaw_pitch() == (90, 0)
+    assert Vec3().north().yaw_pitch() == (-180, 0)
+    assert Vec3(100, 0, 100).yaw_pitch() == (-45, 0)

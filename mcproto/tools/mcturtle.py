@@ -73,6 +73,7 @@ class Turtle:
         self.stift_absetzten = self.pendown
         self.verstecke_kopf = self.hidehead
         self.zeige_kopf = self.showhead
+        self.springe_zu = self.goto
 
         # Kürzel
         self.fd = self.forward
@@ -105,6 +106,13 @@ class Turtle:
     def _paint_head(self) -> None:
         if self._show_head:
             self._set_block(self._head, self._body_pos)
+
+    def goto(self, new_position: Vec3) -> Turtle:
+        if self._show_head:
+            self._set_block("air", self._body_pos)
+        self._pos = new_position
+        self._paint_head()
+        return self
 
     def head(self, block: str) -> Turtle:
         self._head = block

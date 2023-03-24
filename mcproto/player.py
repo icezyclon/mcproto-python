@@ -39,6 +39,10 @@ class Player(Entity, HasStub):
             # TODO: online being True does not give any guarantees
         return self._loaded
 
+    @property
+    def loaded(self) -> bool:
+        raise AttributeError("Loaded does not work on Players, use .online() instead")
+
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(name={self.name})"
 

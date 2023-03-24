@@ -138,7 +138,7 @@ class Entity(HasStub):
         unbreakable: bool = True,
         binding: bool = True,
         vanishing: bool = False,
-        color: COLOR | None = None,
+        color: COLOR | int | None = None,
         nbt: NBT | None = None,
     ) -> None:
         nbt = nbt or NBT()
@@ -148,9 +148,20 @@ class Entity(HasStub):
             nbt.add_vanishing_curse()
         if unbreakable:
             nbt.set_unbreakable()
-        if color and color in color_codes:
+        if isinstance(color, str) and color in color_codes:
             nbt.get_or_create_nbt("display")["color"] = color_codes[color]
+        elif isinstance(color, int):
+            nbt.get_or_create_nbt("display")["color"] = color
         self.replaceItem("armor.head", armortype, nbt=nbt)
+
+    @property
+    def facing(self) -> Vec3:
+        yaw, pitch = self.orientation
+        return Vec3.from_yaw_pitch(yaw, pitch)
+
+    @facing.setter
+    def facing(self, direction: Vec3) -> None:
+        self.orientation = direction.yaw_pitch()
 
     @property
     def loaded(self) -> bool:

@@ -1,5 +1,39 @@
 from ._types import COLOR
 
+__all__ = [
+    "WHITE",
+    "ORANGE",
+    "MAGENTA",
+    "LIGHT_BLUE",
+    "YELLOW",
+    "LIME",
+    "PINK",
+    "GRAY",
+    "LIGHT_GRAY",
+    "CYAN",
+    "PURPLE",
+    "BLUE",
+    "BROWN",
+    "GREEN",
+    "RED",
+    "BLACK",
+    # Deutsche Konstanten
+    "WEISS",
+    "HELLBLAU",
+    "GELB",
+    "LINDGRÜN",
+    "ROSA",
+    "GRAU",
+    "HELLGRAU",
+    "TÜRKIS",
+    "VIOLETT",
+    "BLAU",
+    "BRAUN",
+    "GRÜN",
+    "ROT",
+    "SCHWARZ",
+]
+
 color_codes: dict[COLOR, int] = {
     "white": 0xF9FFFE,
     "orange": 0xF9801D,
@@ -18,3 +52,39 @@ color_codes: dict[COLOR, int] = {
     "red": 0xB02E26,
     "black": 0x1D1D21,
 }
+
+WHITE = "white"
+ORANGE = "orange"
+MAGENTA = "magenta"
+LIGHT_BLUE = "light_blue"
+YELLOW = "yellow"
+LIME = "lime"
+PINK = "pink"
+GRAY = "gray"
+LIGHT_GRAY = "light_gray"
+CYAN = "cyan"
+PURPLE = "purple"
+BLUE = "blue"
+BROWN = "brown"
+GREEN = "green"
+RED = "red"
+BLACK = "black"
+
+# Deutsche Bezeichnungen
+
+WEISS = WHITE
+# ORANGE = ORANGE
+# MAGENTA = MAGENTA
+HELLBLAU = LIGHT_BLUE
+GELB = YELLOW
+LINDGRÜN = LIME
+ROSA = PINK
+GRAU = GRAY
+HELLGRAU = LIGHT_GRAY
+TÜRKIS = CYAN
+VIOLETT = PURPLE
+BLAU = BLUE
+BRAUN = BROWN
+GRÜN = GREEN
+ROT = RED
+SCHWARZ = BLACK
