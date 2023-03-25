@@ -5,7 +5,7 @@ from typing import Literal
 
 from . import entity
 from ._base import HasStub, _EntityProvider
-from ._types import CARDINAL, COLOR
+from ._types import CARDINAL, COLOR, DIRECTION
 from .exception import raise_on_error
 from .mcpb import MinecraftStub
 from .mcpb import minecraft_pb2 as pb
@@ -274,25 +274,32 @@ class _DefaultWorld(HasStub, _EntityProvider):
 
     def copyBlockCube(self, pos1: Vec3, pos2: Vec3) -> list[list[list[str]]]:
         # pos2 inclusive
-        sign = lambda x: 1 if x >= 0 else -1
+        pos1, pos2 = pos1.map_pairwise(min, pos2), pos1.map_pairwise(max, pos2)
         pos1, pos2 = pos1.floor(), pos2.floor()
-        d = pos2 - pos1
         return [
             [
-                [
-                    self.getBlock(Vec3(x, y, z))
-                    for z in range(pos1.z, pos2.z + sign(d.z), sign(d.z))
-                ]
-                for y in range(pos1.y, pos2.y + sign(d.y), sign(d.y))
+                [self.getBlock(Vec3(x, y, z)) for z in range(pos1.z, pos2.z + 1)]
+                for y in range(pos1.y, pos2.y + 1)
             ]
-            for x in range(pos1.x, pos2.x + sign(d.x), sign(d.x))
+            for x in range(pos1.x, pos2.x + 1)
         ]
 
-    def pasteBlockCube(self, blocktypes: list[list[list[str]]], pos: Vec3) -> None:
+    def pasteBlockCube(
+        self, blocktypes: list[list[list[str]]], pos: Vec3, flip_dir: DIRECTION = "east"
+    ) -> None:
         x, y, z = pos.floor()
-        for sliceindex, xi in enumerate(range(x, x + len(blocktypes))):
-            for lineindex, yi in enumerate(range(y, y + len(blocktypes[0]))):
-                for pointindex, zi in enumerate(range(z, z + len(blocktypes[0][0]))):
+        xrange = range(x, x + len(blocktypes))
+        yrange = range(y, y + len(blocktypes[0]))
+        zrange = range(z, z + len(blocktypes[0][0]))
+        if flip_dir in ["south", "west"]:
+            xrange = reversed(xrange)
+        if flip_dir in ["west", "north"]:
+            zrange = range(z + len(blocktypes[0][0]) - 1, z - 1, -1)
+        if flip_dir == "down":
+            yrange = range(y + len(blocktypes[0]) - 1, y - 1, -1)
+        for sliceindex, xi in enumerate(xrange):
+            for lineindex, yi in enumerate(yrange):
+                for pointindex, zi in enumerate(zrange):
                     blocktype = blocktypes[sliceindex][lineindex][pointindex]
                     self.setBlock(blocktype, Vec3(xi, yi, zi))
 
