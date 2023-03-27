@@ -5,7 +5,7 @@ from typing import Literal
 
 from . import entity
 from ._base import HasStub, _EntityProvider
-from ._types import CARDINAL, COLOR
+from ._types import CARDINAL, COLOR, DIRECTION
 from .exception import raise_on_error
 from .mcpb import MinecraftStub
 from .mcpb import minecraft_pb2 as pb
@@ -274,27 +274,67 @@ class _DefaultWorld(HasStub, _EntityProvider):
 
     def copyBlockCube(self, pos1: Vec3, pos2: Vec3) -> list[list[list[str]]]:
         # pos2 inclusive
-        sign = lambda x: 1 if x >= 0 else -1
+        pos1, pos2 = pos1.map_pairwise(min, pos2), pos1.map_pairwise(max, pos2)
         pos1, pos2 = pos1.floor(), pos2.floor()
-        d = pos2 - pos1
         return [
             [
-                [
-                    self.getBlock(Vec3(x, y, z))
-                    for z in range(pos1.z, pos2.z + sign(d.z), sign(d.z))
-                ]
-                for y in range(pos1.y, pos2.y + sign(d.y), sign(d.y))
+                [self.getBlock(Vec3(x, y, z)) for z in range(pos1.z, pos2.z + 1)]
+                for y in range(pos1.y, pos2.y + 1)
             ]
-            for x in range(pos1.x, pos2.x + sign(d.x), sign(d.x))
+            for x in range(pos1.x, pos2.x + 1)
         ]
 
-    def pasteBlockCube(self, blocktypes: list[list[list[str]]], pos: Vec3) -> None:
-        x, y, z = pos.floor()
-        for sliceindex, xi in enumerate(range(x, x + len(blocktypes))):
-            for lineindex, yi in enumerate(range(y, y + len(blocktypes[0]))):
-                for pointindex, zi in enumerate(range(z, z + len(blocktypes[0][0]))):
-                    blocktype = blocktypes[sliceindex][lineindex][pointindex]
-                    self.setBlock(blocktype, Vec3(xi, yi, zi))
+    def pasteBlockCube(
+        self,
+        blocktypes: list[list[list[str]]],
+        pos: Vec3,
+        rotation: DIRECTION = "east",
+        flip_x: bool = False,
+        flip_y: bool = False,
+        flip_z: bool = False,
+    ) -> None:
+        pos = pos.floor()
+        xlen, ylen, zlen = len(blocktypes), len(blocktypes[0]), len(blocktypes[0][0])
+        xstride, ystride, zstride = ylen * zlen, zlen, 1
+        blocks = [blocktype for xslice in blocktypes for yline in xslice for blocktype in yline]
+        if rotation == "east":
+            pass  # noting to do
+        elif rotation == "south":
+            # np.rot90(c, k=1, axes=(0,2)) == np.flip(c, axis=2).T
+            zstride = -zstride
+            xlen, xstride, zlen, zstride = zlen, zstride, xlen, xstride
+        elif rotation == "west":
+            xstride = -xstride
+            zstride = -zstride
+        elif rotation == "north":
+            # np.rot90(c, k=3, axes=(0,2)) == np.flip(c.T, axis=2)
+            xlen, xstride, zlen, zstride = zlen, zstride, xlen, xstride
+            zstride = -zstride
+        elif rotation == "up":
+            raise NotImplementedError
+        elif rotation == "down":
+            raise NotImplementedError
+        else:
+            raise ValueError(f"Rotation should be a direction, was '{rotation}'")
+        if flip_x:
+            xstride = -xstride
+        if flip_y:
+            ystride = -ystride
+        if flip_z:
+            zstride = -zstride
+        xrange = range(xlen) if xstride >= 0 else range(xlen - 1, -1, -1)
+        yrange = range(ylen) if ystride >= 0 else range(ylen - 1, -1, -1)
+        zrange = range(zlen) if zstride >= 0 else range(zlen - 1, -1, -1)
+        for xindex, x in enumerate(xrange):
+            for yindex, y in enumerate(yrange):
+                for zindex, z in enumerate(zrange):
+                    index = x * abs(xstride) + y * abs(ystride) + z * abs(zstride)
+                    assert (
+                        0 <= index < len(blocks)
+                    ), f"{x=} {y=}, {z=} {xstride=} {ystride=} {zstride=} {index=} len={len(blocks)}"
+                    self.setBlock(
+                        blocks[index], Vec3(pos.x + xindex, pos.y + yindex, pos.z + zindex)
+                    )
 
     def placeBed(self, pos: Vec3, direction: CARDINAL = "east", color: COLOR = "red") -> None:
         pos = pos.floor()
