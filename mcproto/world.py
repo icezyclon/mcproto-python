@@ -311,9 +311,11 @@ class _DefaultWorld(HasStub, _EntityProvider):
             xlen, xstride, zlen, zstride = zlen, zstride, xlen, xstride
             zstride = -zstride
         elif rotation == "up":
-            raise NotImplementedError
+            ystride = -ystride
+            xlen, xstride, ylen, ystride = ylen, ystride, xlen, xstride
         elif rotation == "down":
-            raise NotImplementedError
+            xlen, xstride, ylen, ystride = ylen, ystride, xlen, xstride
+            ystride = -ystride
         else:
             raise ValueError(f"Rotation should be a direction, was '{rotation}'")
         if flip_x:
