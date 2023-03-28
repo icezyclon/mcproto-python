@@ -98,7 +98,7 @@ def test_statics() -> None:
 
 
 def test_neg() -> None:
-    v = Vec3(1, 2, 3)
+    v = Vec3(1, -2, 3)
     assert -v == Vec3(-v.x, -v.y, -v.z)
     assert +(-v) == -v
     assert -(+v) == -v

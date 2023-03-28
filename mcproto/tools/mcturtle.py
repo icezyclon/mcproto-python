@@ -108,8 +108,7 @@ class Turtle:
             self._set_block(self._head, self._body_pos)
 
     def goto(self, new_position: Vec3) -> Turtle:
-        if self._show_head:
-            self._set_block("air", self._body_pos)
+        self._paint_body()
         self._pos = new_position
         self._paint_head()
         return self
