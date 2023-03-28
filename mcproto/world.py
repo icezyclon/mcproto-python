@@ -352,15 +352,24 @@ class _WorldHub(HasStub, _EntityProvider):
         super().__init__(stub)
         self._worlds_by_name: dict[str, World] = dict()
 
+    def refreshWorlds(self, remake: bool = False) -> None:
+        """Refresh worlds if you, for example, load a new one with Multiverse Core Plugin"""
+        # TODO: this is not thread safe
+        response = self._stub.accessWorlds(pb.WorldRequest())
+        raise_on_error(response.status)
+        self._worlds_by_name = {
+            world.name: (
+                World(self._stub, world.name, world.info.key, self)
+                if remake or world.name not in self._worlds_by_name
+                else self._worlds_by_name[world.name]
+            )
+            for world in response.worlds
+        }
+
     @property
     def worlds(self) -> tuple[World, ...]:
         if not self._worlds_by_name:
-            response = self._stub.accessWorlds(pb.WorldRequest())
-            raise_on_error(response.status)
-            self._worlds_by_name = {
-                world.name: World(self._stub, world.name, world.info.key, self)
-                for world in response.worlds
-            }
+            self.refreshWorlds()
         return tuple(self._worlds_by_name.values())
 
     @property
@@ -390,7 +399,7 @@ class _WorldHub(HasStub, _EntityProvider):
     def getWorldByName(self, name: str) -> World:
         """World name == Folder name, eg. 'world', 'world_the_nether' or 'world_the_end'"""
         if not self._worlds_by_name:
-            worlds = self.worlds  # will load worlds if not loaded
+            self.refreshWorlds()
         if name not in self._worlds_by_name:
             raise_on_error(pb.Status(code=pb.WORLD_NOT_FOUND, extra="name=" + name))
         return self._worlds_by_name[name]
@@ -400,7 +409,7 @@ class _WorldHub(HasStub, _EntityProvider):
         parts = key.split(":", maxsplit=1)
         if len(parts) == 1:
             key = "minecraft:" + key
-        for world in self.worlds:  # will load worlds if not loaded
+        for world in self.worlds:
             if world.key == key:
                 return world
         raise_on_error(pb.Status(code=pb.WORLD_NOT_FOUND, extra="key=" + key))
