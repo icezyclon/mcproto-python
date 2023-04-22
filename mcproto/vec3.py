@@ -108,6 +108,9 @@ class Vec3:
     def __ceil__(self) -> Vec3:
         return self.map(math.ceil)
 
+    def __trunc__(self) -> Vec3:
+        return self.map(math.trunc)
+
     def __copy__(self) -> Vec3:
         if type(self) == Vec3:
             return self  # immutable
@@ -174,6 +177,9 @@ class Vec3:
 
     def ceil(self) -> Vec3:
         return self.__ceil__()
+
+    def trunc(self) -> Vec3:
+        return self.__trunc__()
 
     def asdict(self) -> dict[str, _NumType]:
         return asdict(self)

@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-from functools import partial
-from typing import Literal
-
 from . import entity
 from ._base import HasStub, _EntityProvider
 from ._types import CARDINAL, COLOR, DIRECTION
@@ -113,46 +110,9 @@ class _DefaultWorld(HasStub, _EntityProvider):
             if len(pos) == 3:
                 if all(isinstance(el, int) for el in pos):
                     return self.getBlock(Vec3(*pos))
-                # TODO: think about getitem and setitem again
-                # elif all(isinstance(el, (int, slice)) for el in pos):
-                #     spos = [el if isinstance(el, slice) else slice(el, el + 1) for el in pos]
-                #     if any(s.start is None or s.stop is None for s in spos):
-                #         raise ValueError("Open slices are forbidden")
-                #     for el in spos:
-                #         el.indices(0)  # only to raise Errors such as float or zero checks
-                #     # if all(s.step is None or s.step == 1 or s.step == -1 for s in spos):
-                #     #     p1 = Vec3(*[el.start for el in spos])
-                #     #     # BlockCube pos2 is INCLUSIVE
-                #     #     p2 = Vec3(*[el.stop - (el.step or 1) for el in spos])
-                #     #     # TODO: check if identical to code below (is prob. not, check at some point)
-                #     #     return self.getBlockCube(Vec3(*p1), Vec3(*p2))
-                #     # else:
-                #     xit = range(spos[0].start, spos[0].stop, spos[0].step or 1)
-                #     yit = range(spos[1].start, spos[1].stop, spos[1].step or 1)
-                #     zit = range(spos[2].start, spos[2].stop, spos[2].step or 1)
-                #     positions = [
-                #         Vec3(x, y, z) for x in xit for y in yit for z in zit
-                #     ]  # TODO: make getBlockList to take Iterable instead of list
-                #     # -> [(1, 1, 1), (1, 1, 2), (1, 2, 1), (1, 2, 2), (2, 1, 1) ...]
-                #     results = self.getBlockList(positions)
-                #     blocktypes = [
-                #         [
-                #             [
-                #                 results[z + y * len(zit) + x * len(yit) * len(zit)]
-                #                 for z in range(len(zit))
-                #             ]
-                #             for y in range(len(yit))
-                #         ]
-                #         for x in range(len(xit))
-                #     ]
-                #     return blocktypes
+                # TODO: think about getitem and setitem and possible options again
                 else:
                     raise TypeError("Expected tuple with int types")
-            # elif len(pos) == 2:
-            #     if all(isinstance(el, Vec3) for el in pos):
-            #         return self.copyBlockCube(*pos)
-            #     else:
-            #         raise TypeError("Expected tuple with 2 elements to have two Vec3 types")
             else:
                 raise TypeError("Expected tuple 3 elements")
         else:
@@ -167,9 +127,7 @@ class _DefaultWorld(HasStub, _EntityProvider):
     ) -> None:
         """Allowed access:
         world[1,2,3] == world[Vec3(1,2,3)] == world[(1,2,3)] for single block access
-        world[1:4, 2, 0:10:2] == world[1:4, 2:3, 0:10:2] for slice access
-        world[Vec3(1,2,3), Vec3(5,6,7)] == world[(1,2,3), (5,6,7)] for cube access.
-        btw. world[Vec3(1,2,3), Vec3(5,6,7)] == world[1:6, 2:7, 3:8]"""
+        world[1:4, 2, 0:10:2] == world[1:4, 2:3, 0:10:2] for slice access]"""
         if not isinstance(blocktype, str):
             raise TypeError(f"Expected to set blocktype str, got {type(blocktype)} instead")
 
@@ -185,13 +143,6 @@ class _DefaultWorld(HasStub, _EntityProvider):
                         raise ValueError("Open slices are forbidden")
                     for el in spos:
                         el.indices(0)  # only to raise Errors such as float or zero checks
-                    # if all(s.step is None or s.step == 1 or s.step == -1 for s in spos):
-                    #     p1 = Vec3(*[el.start for el in spos])
-                    #     # BlockCube is INCLUSIVE
-                    #     p2 = Vec3(*[el.stop - (el.step or 1) for el in spos])
-                    #     # TODO: check if identical with below (is not, fix at some point)
-                    #     return self.setBlockCube(blocktype, Vec3(*p1), Vec3(*p2))
-                    # else:
                     positions = [
                         Vec3(x, y, z)
                         for x in range(spos[0].start, spos[0].stop, spos[0].step or 1)
@@ -201,12 +152,7 @@ class _DefaultWorld(HasStub, _EntityProvider):
                     return self.setBlockList(blocktype, positions)
                 else:
                     raise TypeError("Expected tuple with int or slice types")
-            # TODO: think about setitem and getitem again
-            # elif len(pos) == 2:
-            #     if all(isinstance(el, Vec3) for el in pos):
-            #         return self.setBlockCube(blocktype, *pos)
-            #     else:
-            #         raise TypeError("Expected tuple with 2 elements to have two Vec3 types")
+            # TODO: think about setitem and getitem and possible options again
             else:
                 raise TypeError("Expected a tuple 3 elements")
         else:
@@ -285,23 +231,58 @@ class _DefaultWorld(HasStub, _EntityProvider):
         ]
 
     def pasteBlockCube(
-        self, blocktypes: list[list[list[str]]], pos: Vec3, flip_dir: DIRECTION = "east"
+        self,
+        blocktypes: list[list[list[str]]],
+        pos: Vec3,
+        rotation: DIRECTION = "east",
+        flip_x: bool = False,
+        flip_y: bool = False,
+        flip_z: bool = False,
     ) -> None:
-        x, y, z = pos.floor()
-        xrange = range(x, x + len(blocktypes))
-        yrange = range(y, y + len(blocktypes[0]))
-        zrange = range(z, z + len(blocktypes[0][0]))
-        if flip_dir in ["south", "west"]:
-            xrange = reversed(xrange)
-        if flip_dir in ["west", "north"]:
-            zrange = range(z + len(blocktypes[0][0]) - 1, z - 1, -1)
-        if flip_dir == "down":
-            yrange = range(y + len(blocktypes[0]) - 1, y - 1, -1)
-        for sliceindex, xi in enumerate(xrange):
-            for lineindex, yi in enumerate(yrange):
-                for pointindex, zi in enumerate(zrange):
-                    blocktype = blocktypes[sliceindex][lineindex][pointindex]
-                    self.setBlock(blocktype, Vec3(xi, yi, zi))
+        pos = pos.floor()
+        xlen, ylen, zlen = len(blocktypes), len(blocktypes[0]), len(blocktypes[0][0])
+        xstride, ystride, zstride = ylen * zlen, zlen, 1
+        blocks = [blocktype for xslice in blocktypes for yline in xslice for blocktype in yline]
+        if rotation == "east":
+            pass  # noting to do
+        elif rotation == "south":
+            # np.rot90(c, k=1, axes=(0,2)) == np.flip(c, axis=2).T
+            zstride = -zstride
+            xlen, xstride, zlen, zstride = zlen, zstride, xlen, xstride
+        elif rotation == "west":
+            xstride = -xstride
+            zstride = -zstride
+        elif rotation == "north":
+            # np.rot90(c, k=3, axes=(0,2)) == np.flip(c.T, axis=2)
+            xlen, xstride, zlen, zstride = zlen, zstride, xlen, xstride
+            zstride = -zstride
+        elif rotation == "up":
+            ystride = -ystride
+            xlen, xstride, ylen, ystride = ylen, ystride, xlen, xstride
+        elif rotation == "down":
+            xlen, xstride, ylen, ystride = ylen, ystride, xlen, xstride
+            ystride = -ystride
+        else:
+            raise ValueError(f"Rotation should be a direction, was '{rotation}'")
+        if flip_x:
+            xstride = -xstride
+        if flip_y:
+            ystride = -ystride
+        if flip_z:
+            zstride = -zstride
+        xrange = range(xlen) if xstride >= 0 else range(xlen - 1, -1, -1)
+        yrange = range(ylen) if ystride >= 0 else range(ylen - 1, -1, -1)
+        zrange = range(zlen) if zstride >= 0 else range(zlen - 1, -1, -1)
+        for xindex, x in enumerate(xrange):
+            for yindex, y in enumerate(yrange):
+                for zindex, z in enumerate(zrange):
+                    index = x * abs(xstride) + y * abs(ystride) + z * abs(zstride)
+                    assert (
+                        0 <= index < len(blocks)
+                    ), f"{x=} {y=}, {z=} {xstride=} {ystride=} {zstride=} {index=} len={len(blocks)}"
+                    self.setBlock(
+                        blocks[index], Vec3(pos.x + xindex, pos.y + yindex, pos.z + zindex)
+                    )
 
     def placeBed(self, pos: Vec3, direction: CARDINAL = "east", color: COLOR = "red") -> None:
         pos = pos.floor()
@@ -371,15 +352,24 @@ class _WorldHub(HasStub, _EntityProvider):
         super().__init__(stub)
         self._worlds_by_name: dict[str, World] = dict()
 
+    def refreshWorlds(self, remake: bool = False) -> None:
+        """Refresh worlds if you, for example, load a new one with Multiverse Core Plugin"""
+        # TODO: this is not thread safe
+        response = self._stub.accessWorlds(pb.WorldRequest())
+        raise_on_error(response.status)
+        self._worlds_by_name = {
+            world.name: (
+                World(self._stub, world.name, world.info.key, self)
+                if remake or world.name not in self._worlds_by_name
+                else self._worlds_by_name[world.name]
+            )
+            for world in response.worlds
+        }
+
     @property
     def worlds(self) -> tuple[World, ...]:
         if not self._worlds_by_name:
-            response = self._stub.accessWorlds(pb.WorldRequest())
-            raise_on_error(response.status)
-            self._worlds_by_name = {
-                world.name: World(self._stub, world.name, world.info.key, self)
-                for world in response.worlds
-            }
+            self.refreshWorlds()
         return tuple(self._worlds_by_name.values())
 
     @property
@@ -409,7 +399,7 @@ class _WorldHub(HasStub, _EntityProvider):
     def getWorldByName(self, name: str) -> World:
         """World name == Folder name, eg. 'world', 'world_the_nether' or 'world_the_end'"""
         if not self._worlds_by_name:
-            worlds = self.worlds  # will load worlds if not loaded
+            self.refreshWorlds()
         if name not in self._worlds_by_name:
             raise_on_error(pb.Status(code=pb.WORLD_NOT_FOUND, extra="name=" + name))
         return self._worlds_by_name[name]
@@ -419,7 +409,7 @@ class _WorldHub(HasStub, _EntityProvider):
         parts = key.split(":", maxsplit=1)
         if len(parts) == 1:
             key = "minecraft:" + key
-        for world in self.worlds:  # will load worlds if not loaded
+        for world in self.worlds:
             if world.key == key:
                 return world
         raise_on_error(pb.Status(code=pb.WORLD_NOT_FOUND, extra="key=" + key))

@@ -98,7 +98,7 @@ def test_statics() -> None:
 
 
 def test_neg() -> None:
-    v = Vec3(1, 2, 3)
+    v = Vec3(1, -2, 3)
     assert -v == Vec3(-v.x, -v.y, -v.z)
     assert +(-v) == -v
     assert -(+v) == -v
@@ -220,15 +220,22 @@ def test_div() -> None:
 
 
 def test_round() -> None:
-    from math import ceil, floor
+    from math import ceil, floor, trunc
 
-    v = Vec3(1.4, 2.61, 3.8)
-    assert round(v) == v.round() == Vec3(1, 3, 4)
-    assert round(v) == v.round(0) == Vec3(1, 3, 4)
-    assert round(v, 0) == v.round() == Vec3(1, 3, 4)
-    assert round(v, 0) == v.round(0) == Vec3(1, 3, 4)
-    assert floor(v) == v.floor() == Vec3(1, 2, 3)
-    assert ceil(v) == v.ceil() == Vec3(2, 3, 4)
+    v = Vec3(1.4, -2.61, 3.8)
+    assert round(v) == v.round() == Vec3(1, -3, 4)
+    assert round(v) == v.round(0) == Vec3(1, -3, 4)
+    assert round(v, 0) == v.round() == Vec3(1, -3, 4)
+    assert round(v, 0) == v.round(0) == Vec3(1, -3, 4)
+    assert floor(v) == v.floor() == Vec3(1, -3, 3)
+    assert ceil(v) == v.ceil() == Vec3(2, -2, 4)
+    assert trunc(v) == v.trunc() == Vec3(1, -2, 3)
+    with pytest.raises(TypeError):
+        int(v)  # type: ignore
+
+    assert all(isinstance(w, int) for w in v.floor())
+    assert all(isinstance(w, int) for w in v.ceil())
+    assert all(isinstance(w, int) for w in v.trunc())
 
     assert round(v, 1) != v
     assert round(v, 2) == v
@@ -247,8 +254,7 @@ def test_round() -> None:
     )  # requires float ndigits > 0
 
     # python uses backer's rounding, so not correct for 0.5
-    # and also not accurate for negative numbers
-    assert v.round() == v.map(lambda w: int(w + 0.5))
+    assert v.round() == v.map(lambda w: int(w + 0.5) if w > 0 else int(w - 0.5))
 
 
 def test_iter() -> None:

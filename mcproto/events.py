@@ -4,7 +4,7 @@ import logging
 import time
 from dataclasses import dataclass, field
 from itertools import repeat
-from queue import Empty, Queue, SimpleQueue
+from queue import Empty, Queue
 from threading import Thread
 
 import grpc
