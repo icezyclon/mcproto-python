@@ -92,7 +92,7 @@ class ProjetileHitEvent(Event):
 
     @property
     def target_entity(self) -> Entity | None:
-        if isinstance(self.target, Entity):
+        if isinstance(self.target, Entity) and self.target_player is None:
             # assert self.face is None
             return self.target
         return None
