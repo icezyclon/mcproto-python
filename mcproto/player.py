@@ -121,7 +121,13 @@ class Player(Entity, HasStub):
     def show_title(text: str, typ: Literal["actionbar", "subtitle", "title"] = "title", color: Literal["black", "dark_blue", "dark_green", "dark_aqua", "dark_red", "dark_purple", "gold", "gray", "dark_gray", "blue", "green", "aqua", "red", "light_purple", "yellow", "white"], bold: bool, italic: bool, strikethrough: bool, underlined: bool, obfuscated: bool, duration: int = 1, fade_in: int = 5, fade_out: int = 1) -> None:
         HasStub.runCommand(self, f'title {self.name} times {fade_in*20} {duration*20} {fade_out*20}')
         HasStub.runCommand(self, f'title {self.name} {typ} {"text":"{text}","color":"red","bold":{bold},"italic":{italic},"strikethrough":{strikethrough},"underlined":{underlined},"obfuscated":{obfuscated}}')
+
+    def reset_title():
+        HasStub.runCommand(self, f'title {self.name} reset')
         
+    def clear_title():
+        HasStub.runCommand(self, f'title {self.name} clear')
+    
     # properties that have different stub entpoints than entity
     @property
     def pos(self) -> Vec3:
