@@ -101,9 +101,9 @@ class _DefaultWorld(HasStub, _EntityProvider):
     
     def replaceItem(self, pos: Vec3, slot: SLOTS, item: str, amount: int = 1, nbt: NBT | None = None) -> None:
         if nbt is None:
-            self.runCommand(f"item replace block {pos.x}, {pos.y}, {pos.z} {slot} with {item} {amount}")
+            self.runCommand(f"item replace block {pos.x} {pos.y} {pos.z} {slot} with {item} {amount}")
         else:
-            self.runCommand(f"item replace block {pos.x}, {pos.y}, {pos.z} {slot} with {item}{nbt} {amount}")
+            self.runCommand(f"item replace block {pos.x} {pos.y} {pos.z} {slot} with {item}{nbt} {amount}")
 
     def __getitem__(
         self,
