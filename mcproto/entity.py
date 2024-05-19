@@ -126,6 +126,9 @@ class Entity(HasStub):
         pbool = str(not bool(particles)).lower()
         self.runCommand(f"effect give @s {effect} {int(seconds)} {amplifier} {pbool}")
 
+    def clear_effect(self, effect: str = "") -> None:
+        self.runCommand(f'effect clear @s {effect}')
+
     def replaceItem(self, where: str, item: str, amount: int = 1, nbt: NBT | None = None) -> None:
         if nbt is None:
             self.runCommand(f"item replace entity @s {where} with {item} {amount}")
