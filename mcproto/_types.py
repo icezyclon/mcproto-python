@@ -27,7 +27,8 @@ COLOR: TypeAlias = Literal[
 EFFECTE: TypeAlias = Literal[
     "speed", 
     "slowness", 
-    "haste", "mining_fatigue", 
+    "haste", 
+    "mining_fatigue", 
     "strength", 
     "instant_health", 
     "instant_damage", 
