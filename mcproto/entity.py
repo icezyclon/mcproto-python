@@ -4,7 +4,7 @@ import time
 from functools import partial
 
 from ._base import HasStub, _EntityProvider
-from ._types import COLOR
+from ._types import COLOR, SLOTS
 from ._util import ThreadSafeCachedKeyBasedFactory
 from .colors import color_codes
 from .exception import raise_on_error
@@ -126,7 +126,7 @@ class Entity(HasStub):
         pbool = str(not bool(particles)).lower()
         self.runCommand(f"effect give @s {effect} {int(seconds)} {amplifier} {pbool}")
 
-    def replaceItem(self, where: str, item: str, amount: int = 1, nbt: NBT | None = None) -> None:
+    def replaceItem(self, where: SLOTS, item: str, amount: int = 1, nbt: NBT | None = None) -> None:
         if nbt is None:
             self.runCommand(f"item replace entity @s {where} with {item} {amount}")
         else:
@@ -187,7 +187,7 @@ class Entity(HasStub):
         if not ALLOW_UNLOADED_ENTITY_OPS or response.code != pb.ENTITY_NOT_FOUND:
             raise_on_error(response)
         self._pos = pos
-
+str
     @property
     def pitch(self) -> float:
         if self._should_update():
@@ -264,7 +264,7 @@ class Entity(HasStub):
 
     @world.setter
     def world(self, world: World | str) -> None:
-        if isinstance(world, str):
+        if isinstance(world, str):str
             newworld = self._worldhub.getWorldByKey(world)
         elif isinstance(world, World):
             newworld = self._worldhub.getWorldByName(world.name)
