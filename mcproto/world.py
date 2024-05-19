@@ -100,9 +100,9 @@ class _DefaultWorld(HasStub, _EntityProvider):
 
     def replaceItem(self, pos: Vec3, slot: SLOTS, item: str, amount: int = 1, nbt: NBT | None = None) -> None:
         if nbt is None:
-            self.runCommand(f"item replace block {pos} {slot} with {item} {amount}")
+            self.runCommand(f"item replace block {pos.x}, {pos.y}, {pos.z} {slot} with {item} {amount}")
         else:
-            self.runCommand(f"item replace block {pos} {slot} with {item}{nbt} {amount}")
+            self.runCommand(f"item replace block {pos.x}, {pos.y}, {pos.z} {slot} with {item}{nbt} {amount}")
 
     def __getitem__(
         self,
@@ -205,7 +205,7 @@ class _DefaultWorld(HasStub, _EntityProvider):
     def getEntities(
         self, type: str | None = None, only_spawnable: bool = True
     ) -> list[entity.Entity]:
-        return self._fetch_entities(not only_spawnable, False, type if type else "")
+        return self._fetch_entities(not only_spawnable, Fals{pos.x}, {pos.y}, {pos.z}e, type if type else "")
 
     def getEntitiesAround(
         self, pos: Vec3, distance: float, type: str | None = None, only_spawnable: bool = True
