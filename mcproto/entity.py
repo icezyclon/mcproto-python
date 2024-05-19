@@ -1,3 +1,4 @@
+
 from __future__ import annotations
 
 import time
@@ -264,7 +265,7 @@ class Entity(HasStub):
 
     @world.setter
     def world(self, world: World | str) -> None:
-        if isinstance(world, str):str
+        if isinstance(world, str):
             newworld = self._worldhub.getWorldByKey(world)
         elif isinstance(world, World):
             newworld = self._worldhub.getWorldByName(world.name)
