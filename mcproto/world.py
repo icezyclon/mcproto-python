@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .nbt import NBT
 from . import entity
 from ._base import HasStub, _EntityProvider
 from ._types import CARDINAL, COLOR, DIRECTION, SLOTS
