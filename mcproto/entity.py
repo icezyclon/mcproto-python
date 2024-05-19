@@ -187,7 +187,7 @@ class Entity(HasStub):
         if not ALLOW_UNLOADED_ENTITY_OPS or response.code != pb.ENTITY_NOT_FOUND:
             raise_on_error(response)
         self._pos = pos
-str
+
     @property
     def pitch(self) -> float:
         if self._should_update():
