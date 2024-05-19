@@ -49,7 +49,7 @@ class Minecraft(_DefaultWorld, _EventHandler, _PlayerCache, _EntityCache, _World
 
     @property
     def port(self) -> int:
-        return self._addr[1]minecraft
+        return self._addr[1]
 
     def postToChat(self, *args, sep: str = " ") -> None:
         response = self._stub.postToChat(pb.ChatPostRequest(message=sep.join(map(str, args))))
