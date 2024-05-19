@@ -1,4 +1,4 @@
-ffrom __future__ import annotations
+from __future__ import annotations
 
 import atexit
 import logging
