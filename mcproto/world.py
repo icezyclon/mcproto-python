@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from . import entity
 from ._base import HasStub, _EntityProvider
-from ._types import CARDINAL, COLOR, DIRECTION
+from ._types import CARDINAL, COLOR, DIRECTION, SLOTS
 from .exception import raise_on_error
 from .mcpb import MinecraftStub
 from .mcpb import minecraft_pb2 as pb
@@ -97,6 +97,12 @@ class _DefaultWorld(HasStub, _EntityProvider):
             )
         )
         raise_on_error(response)
+
+    def replaceItem(self, pos: Vec3, slot: SLOTS, item: str, amount: int = 1, nbt: NBT | None = None) -> None:
+        if nbt is None:
+            self.runCommand(f"item replace block {pos} {slot} with {item} {amount}")
+        else:
+            self.runCommand(f"item replace block {pos} {slot} with {item}{nbt} {amount}")
 
     def __getitem__(
         self,
