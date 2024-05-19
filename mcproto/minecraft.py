@@ -55,7 +55,7 @@ class Minecraft(_DefaultWorld, _EventHandler, _PlayerCache, _EntityCache, _World
         response = self._stub.postToChat(pb.ChatPostRequest(message=sep.join(map(str, args))))
         raise_on_error(response)
 
-    def show_title(text: str, typ: Literal["actionbar", "subtitle", "title"] = "title", color: Literal["black", "dark_blue", "dark_green", "dark_aqua", "dark_red", "dark_purple", "gold", "gray", "dark_gray", "blue", "green", "aqua", "red", "light_purple", "yellow", "white"], bold: bool = "false", italic: bool = "false", strikethrough: bool = "false", underlined: bool = "false", obfuscated: bool = "false", duration: int = 1, fade_in: int = 5, fade_out: int = 1) -> None:
+    def show_title(text: str, typ: Literal["actionbar", "subtitle", "title"] = "title", color: Literal["black", "dark_blue", "dark_green", "dark_aqua", "dark_red", "dark_purple", "gold", "gray", "dark_gray", "blue", "green", "aqua", "red", "light_purple", "yellow", "white"] = "gray", bold: bool = "false", italic: bool = "false", strikethrough: bool = "false", underlined: bool = "false", obfuscated: bool = "false", duration: int = 1, fade_in: int = 5, fade_out: int = 1) -> None:
         HasStub.runCommand(self, f'title @a times {fade_in*20} {duration*20} {fade_out*20}')
         HasStub.runCommand(self, f'title @a {typ} {"text":"{text}","color":"red","bold":{bold},"italic":{italic},"strikethrough":{strikethrough},"underlined":{underlined},"obfuscated":{obfuscated}}')
 
