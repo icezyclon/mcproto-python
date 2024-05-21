@@ -14,6 +14,7 @@ from .mcpb import MinecraftStub
 from .mcpb import minecraft_pb2 as pb
 from .player import _PlayerCache
 from .world import _DefaultWorld, _WorldHub
+from typing import Literal
 
 __all__ = ["Minecraft"]
 
@@ -56,12 +57,9 @@ class Minecraft(_DefaultWorld, _EventHandler, _PlayerCache, _EntityCache, _World
         response = self._stub.postToChat(pb.ChatPostRequest(message=sep.join(map(str, args))))
         raise_on_error(response)
 
-    def show_title(self, text: str, typ: Literal["actionbar", "subtitle", "title"] = "title", color: COLOR = "gray", bold: bool = "false", italic: bool = "false", strikethrough: bool = "false", underlined: bool = "false", obfuscated: bool = "false", duration: int = 1, fade_in: int = 5, fade_out: int = 1) -> None:
+    def showTitle(self, text: str, typ: Literal["actionbar", "subtitle", "title"] = "title", color: COLOR = "gray", bold: bool = "false", italic: bool = "false", strikethrough: bool = "false", underlined: bool = "false", obfuscated: bool = "false", duration: int = 3, fade_in: int = 1, fade_out: int = 1) -> None:
         HasStub.runCommand(self, f'title @a times {fade_in}s {duration}s {fade_out}s')
         HasStub.runCommand(self, f'title @a {typ} ' + '{' + f'"text":"{text}","color":"{color}","bold":{bold},"italic":{italic},"strikethrough":{strikethrough},"underlined":{underlined},"obfuscated":{obfuscated}' + '}')
-
-    def reset_title(self):
-        HasStub.runCommand(self, f'title @a reset')
         
-    def clear_title(self):
-        HasStub.runCommand(self, f'title @a clear')
+    def clearTitle(self):
+        HasStub.runCommand(self, 'title @a clear')
