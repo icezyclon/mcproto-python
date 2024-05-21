@@ -4,7 +4,7 @@ import time
 from functools import partial
 
 from ._base import HasStub, _EntityProvider
-from ._types import COLOR
+from ._types import COLOR, EFFECT
 from ._util import ThreadSafeCachedKeyBasedFactory
 from .colors import color_codes
 from .exception import raise_on_error
@@ -121,10 +121,13 @@ class Entity(HasStub):
         return [e for e in entities if e is not self]
 
     def giveEffect(
-        self, effect: str, seconds: int = 30, amplifier: int = 0, particles: bool = True
+        self, effect: EFFECT, seconds: int = 30, amplifier: int = 0, particles: bool = True
     ) -> None:
         pbool = str(not bool(particles)).lower()
         self.runCommand(f"effect give @s {effect} {int(seconds)} {amplifier} {pbool}")
+
+    def clear_effect(self, EFFECT: str = "") -> None:
+        self.runCommand(f'effect clear @s {effect}')
 
     def replaceItem(self, where: str, item: str, amount: int = 1, nbt: NBT | None = None) -> None:
         if nbt is None:
