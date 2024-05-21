@@ -119,15 +119,12 @@ class Player(Entity, HasStub):
     def deop(self) -> None:
         HasStub.runCommand(self, f"deop {self.name}")
 
-    def show_title(self, text: str, typ: Literal["actionbar", "subtitle", "title"] = "title", color: COLOR = "gray", bold: bool = "false", italic: bool = "false", strikethrough: bool = "false", underlined: bool = "false", obfuscated: bool = "false", duration: int = 1, fade_in: int = 5, fade_out: int = 1) -> None:
+    def showTitle(self, text: str, typ: Literal["actionbar", "subtitle", "title"] = "title", color: COLOR = "gray", bold: bool = "false", italic: bool = "false", strikethrough: bool = "false", underlined: bool = "false", obfuscated: bool = "false", duration: int = 3, fade_in: int = 1, fade_out: int = 1) -> None:
         HasStub.runCommand(self, f'title {self.name} times {fade_in}s {duration}s {fade_out}s')
         HasStub.runCommand(self, f'title {self.name} {typ} ' + '{' + f'"text":"{text}","color":"{color}","bold":{bold},"italic":{italic},"strikethrough":{strikethrough},"underlined":{underlined},"obfuscated":{obfuscated}' + '}')
 
-    def reset_title(self):
-        HasStub.runCommand(self, f'title {self.name} reset')
-        
-    def clear_title(self):
-        HasStub.runCommand(self, f'title {self.name} clear')
+    def clearTitle(self):
+        self.runCommand("title @s clear")
     
     # properties that have different stub entpoints than entity
     @property
