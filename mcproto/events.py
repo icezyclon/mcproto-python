@@ -92,7 +92,7 @@ class ProjetileHitEvent(Event):
 
     @property
     def target_entity(self) -> Entity | None:
-        if isinstance(self.target, Entity):
+        if isinstance(self.target, Entity) and self.target_player is None:
             # assert self.face is None
             return self.target
         return None
@@ -112,7 +112,7 @@ class _EventPoller:
         self.handler = handler
         self.events: Queue[Event] = Queue(MAX_QUEUE_SIZE)
         self.thread = Thread(
-            target=self._poll, name=f"EvenPoller-EventType-{self.key}", daemon=True
+            target=self._poll, name=f"EventPoller-EventType-{self.key}", daemon=True
         )
         self.thread_cancelled = False
         logging.debug(f"_EventPoller: __init__: Starting thread...")
@@ -140,9 +140,7 @@ class _EventPoller:
                 if self.thread_cancelled:
                     logging.info(f"EventPoller: _poll: stream was cancelled")
                 else:
-                    logging.error(
-                        f"EventPoller: _poll: stream was cancelled, but NOT via cleanup!"
-                    )
+                    logging.error("EventPoller: _poll: stream was cancelled, but NOT via cleanup!")
                     raise e
             else:
                 logging.error(f"EventPoller: _poll: stream was closed by RpcError: {e}")

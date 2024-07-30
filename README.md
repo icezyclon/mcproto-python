@@ -50,3 +50,7 @@ The entire library is very much a work-in-progress, so there is still a lot to d
 ## License
 
 [LGPLv3](LICENSE)
+
+> Note: The *intent* behind the chosen license, is to allow the licensed software to be *used* (as is) in any type of project, even commercial or closed-source ones.
+> However, changes or modifications *to the licensed software itself* must be shared via the same license openly.
+> Checkout [this blog](https://fossa.com/blog/open-source-software-licenses-101-lgpl-license/) for an in-depth explanation.

@@ -3,7 +3,7 @@ import weakref
 from typing import Callable, Hashable, TypeAlias, TypeVar
 
 
-# Taken from: https://gist.github.com/Eboubaker/6a0b807788088a764b2a4c156fda0e4b
+# Originally from: https://gist.github.com/Eboubaker/6a0b807788088a764b2a4c156fda0e4b
 class ReentrantRWLock:
     """
     A lock object that allows many simultaneous "read locks", but only one "write lock."
@@ -125,6 +125,8 @@ class ThreadSafeCachedKeyBasedFactory:
         with self._lock.for_write():
             self._cache[key] = item
 
+    # Note: Deleting cannot happend explicitly, only via GC using weakref
+    # Otherwise, we could not guarantee that the value is singleton
     # def __delitem__(self, key) -> None:
     #     with self._lock.for_write():
     #         del self._cache[key]
@@ -134,28 +136,27 @@ class ThreadSafeCachedKeyBasedFactory:
     #         self._cache.clear()
 
     def get_or_create(self, key: Key, factory: Callable[[Key], Value] | None = None) -> Value:
+        strong_ref = None
         with self._lock.for_read():
-            strong_ref = None
             try:
                 strong_ref = self._cache[key]
             except KeyError:
                 # might race between any check like "key in self._cache" so just try access instead
-                # if self._cache is weakref (gc could run inbetween any two calls)
+                # if self._cache is weakref (gc could run inbetween any two calls, therefore save strong reference in variable directly)
                 pass
-            if strong_ref is None:
-                with self._lock.for_write():
-                    # must check again due to potential race condition
-                    try:
-                        strong_ref = self._cache[key]
-                    except KeyError:
-                        # might race between any check like "key in self._cache" so just try access instead
-                        # if self._cache is weakref (gc could run inbetween any two calls)
-                        pass
-                    if strong_ref is None:
-                        # now we can be sure nobody will create entry with key because we have write lock
-                        if factory is not None:
-                            strong_ref = factory(key)
-                        else:
-                            strong_ref = self._default_factory(key)
-                        self._cache[key] = strong_ref
-            return strong_ref
+        # release read lock before aquiring write lock (could deadlock otherwise)
+        if strong_ref is None:
+            with self._lock.for_write():
+                # must check again as entry could have been created while waiting for write lock (race condition)
+                try:
+                    strong_ref = self._cache[key]
+                except KeyError:
+                    pass
+                if strong_ref is None:
+                    # now we can be sure nobody will create entry with key because we have write lock
+                    if factory is not None:
+                        strong_ref = factory(key)
+                    else:
+                        strong_ref = self._default_factory(key)
+                    self._cache[key] = strong_ref
+        return strong_ref
