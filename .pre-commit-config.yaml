@@ -29,6 +29,6 @@ repos:
         name: run-tests
         entry: pytest .
         language: python
-        additional_dependencies: [pre-commit, pytest, pytest-mock, grpcio, protobuf]
+        additional_dependencies: [pre-commit, pytest, pytest-mock, pytest-timeout, grpcio, protobuf]
         always_run: true
         pass_filenames: false

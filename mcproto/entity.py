@@ -5,7 +5,7 @@ from functools import partial
 
 from ._base import HasStub, _EntityProvider
 from ._types import COLOR
-from ._util import ThreadSafeCachedKeyBasedFactory
+from ._util import ThreadSafeSingeltonCache
 from .colors import color_codes
 from .exception import raise_on_error
 from .mcpb import MinecraftStub
@@ -286,7 +286,7 @@ class Entity(HasStub):
 class _EntityCache(_WorldHub, HasStub, _EntityProvider):
     def __init__(self, stub: MinecraftStub) -> None:
         super().__init__(stub)
-        self._entity_cache = ThreadSafeCachedKeyBasedFactory(
+        self._entity_cache = ThreadSafeSingeltonCache(
             partial(Entity, stub, self), use_weakref=True
         )
 
