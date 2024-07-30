@@ -7,11 +7,11 @@ from mcproto._util import ReentrantRWLock
 
 # Note: set timeout for these tests, in case of deadlock we want to fail the test
 # Should be at least 3 * SLEEP_TIME
-TIMEOUT = 5
+TIMEOUT = 3
 
 # Some tests use sleeps to simulate possible race conditions
 # Define how long this should be - test precision is dependend on this!
-SLEEP_TIME = 0.5
+SLEEP_TIME = 0.2
 
 
 @pytest.mark.timeout(TIMEOUT)
@@ -86,11 +86,9 @@ def test_multi_threaded_many_reads():
     t2.start()
     t1.join()
     t2.join()
-    end = time.perf_counter()
+    delta = time.perf_counter() - start
     # a bit more than SLEEP_TIME, definitly less than 2 * SLEEP_TIME!
-    assert (
-        end - start < SLEEP_TIME * 1.5
-    ), f"Time for both joins was {end - start}, should be < {SLEEP_TIME * 1.5}"
+    assert delta < 1.5 * SLEEP_TIME, f"Time for both joins should be {delta=} > {1.5 * SLEEP_TIME}"
 
 
 @pytest.mark.timeout(TIMEOUT)
@@ -108,11 +106,9 @@ def test_multi_threaded_write_exclusive():
     t2.start()
     t1.join()
     t2.join()
-    end = time.perf_counter()
+    delta = time.perf_counter() - start
     # definitly at least 2 * SLEEP_TIME!
-    assert (
-        end - start > 1.9 * SLEEP_TIME
-    ), f"Time for both joins was {end - start}, should be > {1.9 * SLEEP_TIME}"
+    assert delta > 1.9 * SLEEP_TIME, f"Time for both joins should be {delta=} > {1.9 * SLEEP_TIME}"
 
 
 @pytest.mark.timeout(TIMEOUT)
@@ -135,11 +131,9 @@ def test_multi_threaded_read_write_exclusive():
     t2.start()
     t1.join()
     t2.join()
-    end = time.perf_counter()
+    delta = time.perf_counter() - start
     # definitly at least 2 * SLEEP_TIME!
-    assert (
-        end - start > 1.9 * SLEEP_TIME
-    ), f"Time for both joins was {end - start}, should be > {1.9 * SLEEP_TIME}"
+    assert delta > 1.9 * SLEEP_TIME, f"Time for both joins should be {delta=} > {1.9 * SLEEP_TIME}"
 
 
 @pytest.mark.timeout(TIMEOUT)
@@ -162,11 +156,9 @@ def test_multi_threaded_write_read_exclusive():
     t2.start()
     t1.join()
     t2.join()
-    end = time.perf_counter()
+    delta = time.perf_counter() - start
     # definitly at least 2 * SLEEP_TIME!
-    assert (
-        end - start > 1.9 * SLEEP_TIME
-    ), f"Time for both joins was {end - start}, should be > {1.9 * SLEEP_TIME}"
+    assert delta > 1.9 * SLEEP_TIME, f"Time for both joins should be {delta=} > {1.9 * SLEEP_TIME}"
 
 
 @pytest.mark.timeout(TIMEOUT)
@@ -191,11 +183,9 @@ def test_multi_threaded_read_write_exclusive_direct():
     t2.start()
     t1.join()
     t2.join()
-    end = time.perf_counter()
+    delta = time.perf_counter() - start
     # definitly at least 2 * SLEEP_TIME!
-    assert (
-        end - start > 1.9 * SLEEP_TIME
-    ), f"Time for both joins was {end - start}, should be > {1.9 * SLEEP_TIME}"
+    assert delta > 1.9 * SLEEP_TIME, f"Time for both joins should be {delta=} > {1.9 * SLEEP_TIME}"
 
 
 @pytest.mark.timeout(TIMEOUT)
@@ -220,11 +210,9 @@ def test_multi_threaded_write_read_exclusive_direct():
     t2.start()
     t1.join()
     t2.join()
-    end = time.perf_counter()
+    delta = time.perf_counter() - start
     # definitly at least 2 * SLEEP_TIME!
-    assert (
-        end - start > 1.9 * SLEEP_TIME
-    ), f"Time for both joins was {end - start}, should be > {1.9 * SLEEP_TIME}"
+    assert delta > 1.9 * SLEEP_TIME, f"Time for both joins should be {delta=} > {1.9 * SLEEP_TIME}"
 
 
 @pytest.mark.timeout(TIMEOUT)
@@ -248,11 +236,9 @@ def test_multi_threaded_read_readwrite_exclusive():
     t2.start()
     t1.join()
     t2.join()
-    end = time.perf_counter()
+    delta = time.perf_counter() - start
     # definitly at least 2 * SLEEP_TIME!
-    assert (
-        end - start > 1.9 * SLEEP_TIME
-    ), f"Time for both joins was {end - start}, should be > {1.9 * SLEEP_TIME}"
+    assert delta > 1.9 * SLEEP_TIME, f"Time for both joins should be {delta=} > {1.9 * SLEEP_TIME}"
 
 
 @pytest.mark.timeout(TIMEOUT)
@@ -276,11 +262,9 @@ def test_multi_threaded_readwrite_read_exclusive():
     t2.start()
     t1.join()
     t2.join()
-    end = time.perf_counter()
+    delta = time.perf_counter() - start
     # definitly at least 2 * SLEEP_TIME!
-    assert (
-        end - start > 1.9 * SLEEP_TIME
-    ), f"Time for both joins was {end - start}, should be > {1.9 * SLEEP_TIME}"
+    assert delta > 1.9 * SLEEP_TIME, f"Time for both joins should be {delta=} > {1.9 * SLEEP_TIME}"
 
 
 @pytest.mark.timeout(TIMEOUT)
@@ -307,11 +291,9 @@ def test_multi_threaded_read_readwrite_exclusive_direct():
     t2.start()
     t1.join()
     t2.join()
-    end = time.perf_counter()
+    delta = time.perf_counter() - start
     # definitly at least 2 * SLEEP_TIME!
-    assert (
-        end - start > 1.9 * SLEEP_TIME
-    ), f"Time for both joins was {end - start}, should be > {1.9 * SLEEP_TIME}"
+    assert delta > 1.9 * SLEEP_TIME, f"Time for both joins should be {delta=} > {1.9 * SLEEP_TIME}"
 
 
 @pytest.mark.timeout(TIMEOUT)
@@ -338,11 +320,9 @@ def test_multi_threaded_readwrite_read_exclusive_direct():
     t2.start()
     t1.join()
     t2.join()
-    end = time.perf_counter()
+    delta = time.perf_counter() - start
     # definitly at least 2 * SLEEP_TIME!
-    assert (
-        end - start > 1.9 * SLEEP_TIME
-    ), f"Time for both joins was {end - start}, should be > {1.9 * SLEEP_TIME}"
+    assert delta > 1.9 * SLEEP_TIME, f"Time for both joins should be {delta=} > {1.9 * SLEEP_TIME}"
 
 
 @pytest.mark.timeout(TIMEOUT)
@@ -363,8 +343,33 @@ def test_multi_threaded_readwrite_readwrite_exclusive():
     t2.start()
     t1.join()
     t2.join()
-    end = time.perf_counter()
+    delta = time.perf_counter() - start
     # definitly at least 3 * SLEEP_TIME but less than 4 * SLEEP_TIME!
     assert (
-        2.9 * SLEEP_TIME < end - start < 3.5 * SLEEP_TIME
-    ), f"Time for both joins was {end - start}, should be > {1.9 * SLEEP_TIME}"
+        2.9 * SLEEP_TIME < delta < 3.5 * SLEEP_TIME
+    ), f"Time for both joins should be {2.9 * SLEEP_TIME} < {delta=} < {3.5 * SLEEP_TIME}"
+
+
+@pytest.mark.timeout(TIMEOUT)
+def test_multi_threaded_writeread_writeread_exclusive():
+    lock = ReentrantRWLock()
+
+    def writeread():
+        with lock.for_write():
+            time.sleep(SLEEP_TIME)
+            with lock.for_read():
+                time.sleep(SLEEP_TIME)
+
+    t1 = Thread(name="writeread1", target=writeread, daemon=True)
+    t2 = Thread(name="writeread2", target=writeread, daemon=True)
+    start = time.perf_counter()
+    t1.start()
+    time.sleep(0.01)
+    t2.start()
+    t1.join()
+    t2.join()
+    delta = time.perf_counter() - start
+    # definitly at least 3 * SLEEP_TIME but less than 4 * SLEEP_TIME!
+    assert (
+        3.9 * SLEEP_TIME < delta < 4.5 * SLEEP_TIME
+    ), f"Time for both joins should be {3.9 * SLEEP_TIME} < {delta=} < {4.5 * SLEEP_TIME}"
