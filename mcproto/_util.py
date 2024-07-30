@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 import contextlib
 import threading
 import weakref
 from typing import Callable, Generator, Hashable, TypeAlias, TypeVar
+
+__all__ = ["ReentrantRWLock", "ThreadSafeSingeltonCache"]
 
 
 class ReentrantRWLock:
@@ -65,7 +69,7 @@ class ReentrantRWLock:
         self._lock.release()
 
     @contextlib.contextmanager
-    def for_read(self) -> Generator["ReentrantRWLock", None, None]:
+    def for_read(self) -> Generator[ReentrantRWLock, None, None]:
         """
         used for 'with' block, e.g., with lock.for_read(): ...
         """
@@ -76,7 +80,7 @@ class ReentrantRWLock:
             self.release_read()
 
     @contextlib.contextmanager
-    def for_write(self) -> Generator["ReentrantRWLock", None, None]:
+    def for_write(self) -> Generator[ReentrantRWLock, None, None]:
         """
         used for 'with' block, e.g., with lock.for_write(): ...
         """
