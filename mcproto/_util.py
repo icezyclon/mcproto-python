@@ -66,6 +66,9 @@ class ReentrantRWLock:
 
     @contextlib.contextmanager
     def for_read(self) -> Generator["ReentrantRWLock", None, None]:
+        """
+        used for 'with' block, e.g., with lock.for_read(): ...
+        """
         try:
             self.acquire_read()
             yield self
@@ -74,6 +77,9 @@ class ReentrantRWLock:
 
     @contextlib.contextmanager
     def for_write(self) -> Generator["ReentrantRWLock", None, None]:
+        """
+        used for 'with' block, e.g., with lock.for_write(): ...
+        """
         try:
             self.acquire_write()
             yield self
