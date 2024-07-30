@@ -54,9 +54,12 @@ class ReentrantRWLock:
             return
         self._lock.acquire()
         me_included = 1 if ident in self._readers else 0
-        while len(self._readers) - me_included > 0:
+        self._readers.discard(ident)  # do not be reader while waiting for write or wake might fail
+        while len(self._readers) > 0:
             self._lock.wait()
         self._writer = ident
+        if me_included:
+            self._readers.add(ident)  # stay reader if was reader originally
 
     def release_write(self) -> None:
         """
