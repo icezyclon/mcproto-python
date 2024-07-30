@@ -4,6 +4,7 @@ import time
 from functools import partial
 from typing import Literal
 
+from ._types import COLOR
 from ._base import HasStub, _PlayerProvider
 from ._util import ThreadSafeCachedKeyBasedFactory
 from .entity import Entity
@@ -118,6 +119,13 @@ class Player(Entity, HasStub):
     def deop(self) -> None:
         HasStub.runCommand(self, f"deop {self.name}")
 
+    def showTitle(self, text: str, typ: Literal["actionbar", "subtitle", "title"] = "title", color: COLOR = "gray", bold: bool = "false", italic: bool = "false", strikethrough: bool = "false", underlined: bool = "false", obfuscated: bool = "false", duration: int = 3, fade_in: int = 1, fade_out: int = 1) -> None:
+        HasStub.runCommand(self, f'title {self.name} times {fade_in}s {duration}s {fade_out}s')
+        HasStub.runCommand(self, f'title {self.name} {typ} ' + '{' + f'"text":"{text}","color":"{color}","bold":{bold},"italic":{italic},"strikethrough":{strikethrough},"underlined":{underlined},"obfuscated":{obfuscated}' + '}')
+
+    def clearTitle(self):
+        self.runCommand("title @s clear")
+    
     # properties that have different stub entpoints than entity
     @property
     def pos(self) -> Vec3:
