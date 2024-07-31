@@ -5,7 +5,7 @@ requires = [
 ]
 
 [project]
-name = "mcproto"
+name = "mcpb"
 version = "1.18.2.1.6"
 description="Library for communicating with Minecraft servers via same-named grpc protobuf plugin"
 readme = "README.md"

@@ -28,7 +28,7 @@ class Turtle:
         elif isinstance(world, str):
             self._world = self._mc.getWorldByKey(world)
         elif world is not None:
-            raise TypeError("Argument world must be of type str or mcproto.World")
+            raise TypeError("Argument world must be of type str or mcpb.World")
         else:
             self._world = None
 

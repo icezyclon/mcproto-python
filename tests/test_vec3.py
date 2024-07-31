@@ -3,7 +3,7 @@ from numbers import Number
 
 import pytest
 
-from mcproto import Vec3
+from mcpb import Vec3
 
 
 def close(a, b) -> bool:

@@ -5,11 +5,11 @@ from functools import partial
 from typing import Literal
 
 from ._base import HasStub, _PlayerProvider
+from ._proto import MinecraftStub
+from ._proto import minecraft_pb2 as pb
 from ._util import ThreadSafeSingeltonCache
 from .entity import Entity
 from .exception import raise_on_error
-from .mcpb import MinecraftStub
-from .mcpb import minecraft_pb2 as pb
 from .nbt import NBT
 from .vec3 import Vec3
 from .world import World, _WorldHub

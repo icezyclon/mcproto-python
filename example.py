@@ -1,4 +1,4 @@
-from mcproto import Minecraft, Vec3
+from mcpb import Minecraft, Vec3
 
 mc = Minecraft()
 

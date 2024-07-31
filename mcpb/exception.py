@@ -1,7 +1,7 @@
-from .mcpb import minecraft_pb2 as pb
+from ._proto import minecraft_pb2 as pb
 
 __all__ = [
-    "MCProtoFehler",
+    "MCPBFehler",
     "UnbekannterFehler",
     "FehlendesArgument",
     "UngültigesArgument",
@@ -15,47 +15,47 @@ __all__ = [
 ]
 
 
-class MCProtoFehler(Exception):
+class MCPBFehler(Exception):
     pass
 
 
-class UnbekannterFehler(MCProtoFehler):
+class UnbekannterFehler(MCPBFehler):
     pass
 
 
-class FehlendesArgument(MCProtoFehler):
+class FehlendesArgument(MCPBFehler):
     pass
 
 
-class UngültigesArgument(MCProtoFehler):
+class UngültigesArgument(MCPBFehler):
     pass
 
 
-class NichtImplementiert(MCProtoFehler):
+class NichtImplementiert(MCPBFehler):
     pass
 
 
-class WeltNichtGefunden(MCProtoFehler):
+class WeltNichtGefunden(MCPBFehler):
     pass
 
 
-class SpielerNichtGefunden(MCProtoFehler):
+class SpielerNichtGefunden(MCPBFehler):
     pass
 
 
-class BlockTypNichtGefunden(MCProtoFehler):
+class BlockTypNichtGefunden(MCPBFehler):
     pass
 
 
-class WesenTypNichtGefunden(MCProtoFehler):
+class WesenTypNichtGefunden(MCPBFehler):
     pass
 
 
-class WesenNichtSpawnbar(MCProtoFehler):
+class WesenNichtSpawnbar(MCPBFehler):
     pass
 
 
-class WesenNichtGefunden(MCProtoFehler):
+class WesenNichtGefunden(MCPBFehler):
     pass
 
 

@@ -3,7 +3,7 @@ from threading import Thread
 
 import pytest
 
-from mcproto._util import ReentrantRWLock
+from mcpb._util import ReentrantRWLock
 
 # Note: set timeout for these tests, in case of deadlock we want to fail the test
 # Should be at least 3 * SLEEP_TIME

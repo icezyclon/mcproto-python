@@ -3,9 +3,9 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
+from ._proto import MinecraftStub
+from ._proto import minecraft_pb2 as pb
 from .exception import raise_on_error
-from .mcpb import MinecraftStub
-from .mcpb import minecraft_pb2 as pb
 
 if TYPE_CHECKING:
     from .entity import Entity

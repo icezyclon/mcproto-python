@@ -10,10 +10,10 @@ from threading import Thread
 import grpc
 
 from ._base import HasStub, _EntityProvider, _PlayerProvider
+from ._proto import MinecraftStub
+from ._proto import minecraft_pb2 as pb
 from ._types import DIRECTION
 from .entity import Entity
-from .mcpb import MinecraftStub
-from .mcpb import minecraft_pb2 as pb
 from .player import Player
 from .vec3 import Vec3
 

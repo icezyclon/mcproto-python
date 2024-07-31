@@ -3,8 +3,8 @@ from unittest.mock import MagicMock, PropertyMock, call, patch
 import pytest
 from pytest_mock import MockerFixture
 
-from mcproto import Minecraft, Vec3, World
-from mcproto.tools import Turtle
+from mcpb import Minecraft, Vec3, World
+from mcpb.tools import Turtle
 
 # see https://docs.python.org/3/library/unittest.mock.html#unittest.mock.PropertyMock
 
@@ -54,7 +54,7 @@ def test_init_create_new_instance_of_mc_get_pos_and_world_if_not_provided(
     mocker: MockerFixture,
 ):
     # setup
-    mocked_mcclass = mocker.patch("mcproto.tools.mcturtle.Minecraft", spec=True)
+    mocked_mcclass = mocker.patch("mcpb.tools.mcturtle.Minecraft", spec=True)
     mc = MagicMock(spec=Minecraft)
     mocked_mcclass.return_value = mc
     assert isinstance(mc, Minecraft)
@@ -86,7 +86,7 @@ def test_init_create_new_instance_of_mc_get_pos_and_world_if_not_provided(
 @pytest.mark.skip(reason="should be adjusted after Turtle update")
 def test_init_create_new_instance_of_mc_if_not_provided(mocker: MockerFixture):
     # setup
-    mocked_mcclass = mocker.patch("mcproto.tools.mcturtle.Minecraft", spec=True)
+    mocked_mcclass = mocker.patch("mcpb.tools.mcturtle.Minecraft", spec=True)
     mc = MagicMock(spec=Minecraft)
     mocked_mcclass.return_value = mc
     assert isinstance(mc, Minecraft)

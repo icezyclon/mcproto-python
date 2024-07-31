@@ -2,7 +2,7 @@ import gc
 
 import pytest
 
-from mcproto._util import ThreadSafeSingeltonCache
+from mcpb._util import ThreadSafeSingeltonCache
 
 # Note: set timeout for these tests, in case of deadlock we want to fail the test
 # Should be at least 3 * SLEEP_TIME

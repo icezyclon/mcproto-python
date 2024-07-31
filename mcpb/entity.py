@@ -4,12 +4,12 @@ import time
 from functools import partial
 
 from ._base import HasStub, _EntityProvider
+from ._proto import MinecraftStub
+from ._proto import minecraft_pb2 as pb
 from ._types import COLOR
 from ._util import ThreadSafeSingeltonCache
 from .colors import color_codes
 from .exception import raise_on_error
-from .mcpb import MinecraftStub
-from .mcpb import minecraft_pb2 as pb
 from .nbt import NBT
 from .vec3 import Vec3
 from .world import World, _WorldHub

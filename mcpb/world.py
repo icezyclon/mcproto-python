@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from . import entity
 from ._base import HasStub, _EntityProvider
+from ._proto import MinecraftStub
+from ._proto import minecraft_pb2 as pb
 from ._types import CARDINAL, COLOR, DIRECTION
 from .exception import raise_on_error
-from .mcpb import MinecraftStub
-from .mcpb import minecraft_pb2 as pb
 from .vec3 import Vec3
 
 MAX_BLOCKS = 50000  # TODO: replace with block stream
@@ -164,7 +164,9 @@ class _DefaultWorld(HasStub, _EntityProvider):
     ) -> list[entity.Entity]:
         request = pb.EntityRequest(
             worldwide=pb.EntityRequest.WorldEntities(
-                world=self._pb_world, type=entity_type, includeNotSpawnable=include_non_spawnable
+                world=self._pb_world,
+                type=entity_type,
+                includeNotSpawnable=include_non_spawnable,
             ),
             withLocations=with_locations,
         )
@@ -202,7 +204,11 @@ class _DefaultWorld(HasStub, _EntityProvider):
         return self._fetch_entities(not only_spawnable, False, type if type else "")
 
     def getEntitiesAround(
-        self, pos: Vec3, distance: float, type: str | None = None, only_spawnable: bool = True
+        self,
+        pos: Vec3,
+        distance: float,
+        type: str | None = None,
+        only_spawnable: bool = True,
     ) -> list[entity.Entity]:
         entities = self._fetch_entities(not only_spawnable, True, type if type else "")
         return [e for e in entities if pos.distance(e.pos) <= distance]
@@ -281,7 +287,8 @@ class _DefaultWorld(HasStub, _EntityProvider):
                         0 <= index < len(blocks)
                     ), f"{x=} {y=}, {z=} {xstride=} {ystride=} {zstride=} {index=} len={len(blocks)}"
                     self.setBlock(
-                        blocks[index], Vec3(pos.x + xindex, pos.y + yindex, pos.z + zindex)
+                        blocks[index],
+                        Vec3(pos.x + xindex, pos.y + yindex, pos.z + zindex),
                     )
 
     def placeBed(self, pos: Vec3, direction: CARDINAL = "east", color: COLOR = "red") -> None:
@@ -405,7 +412,26 @@ class _WorldHub(HasStub, _EntityProvider):
         return self._worlds_by_name[name]
 
     def getWorldByKey(self, key: str) -> World:
-        """World key == Minecraft key, eg. 'the_nether' or 'minecraft:the_nether'"""
+        """The ``key`` of a world is the minecraft internal name/id.
+        Typically a regular server has the following worlds/keys:
+
+        - ``"minecraft:overworld"``
+
+        - ``"minecraft:the_nether"``
+
+        - ``"minecraft:the_end"``
+
+        The ``"minecraft:"`` prefix may be omitted, e.g., ``"the_nether"``.
+
+        If the given ``key`` does not exist an exception is raised.
+
+        :param key: Internal name/id of the world, such as ``"minecraft:the_nether"`` or ``"the_nether"``
+        :type key: str
+        :return: The corresponding :class:`World` object
+        :rtype: World
+        """
+        #         Use :method:`Keeper.storedata` to store the object's data in
+        # `Keeper.data`:instance_attribute:.
         parts = key.split(":", maxsplit=1)
         if len(parts) == 1:
             key = "minecraft:" + key

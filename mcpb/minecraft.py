@@ -6,11 +6,11 @@ import logging
 import grpc
 
 from ._base import HasStub
+from ._proto import MinecraftStub
+from ._proto import minecraft_pb2 as pb
 from .entity import _EntityCache
 from .events import _EventHandler
 from .exception import raise_on_error
-from .mcpb import MinecraftStub
-from .mcpb import minecraft_pb2 as pb
 from .player import _PlayerCache
 from .world import _DefaultWorld, _WorldHub
 
