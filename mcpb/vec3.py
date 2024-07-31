@@ -15,10 +15,10 @@ __all__ = ["Vec3"]
 
 @dataclass(frozen=True, eq=True, order=True, repr=True)
 class Vec3:
-    """Vec3 is a 3-dimensional vector for representing x, y and z coordinates.
-    Each instance of this class is frozen, so calculations on it yield new instances of Vec3 instead of changing the x, y and z values directly.
+    """:class:`Vec3` is a 3-dimensional vector for representing ``x``, ``y`` and ``z`` coordinates.
+    Each instance of this class is frozen, so calculations on it yield new instances of :class:`Vec3` instead of changing the x, y and z values directly.
 
-    :return: New frozen instance of Vec3
+    :return: New frozen instance of :class:`Vec3` class
     :rtype: Vec3
     """
 

@@ -21,6 +21,30 @@ logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)
 
 
 class Minecraft(_DefaultWorld, _EventHandler, _PlayerCache, _EntityCache, _WorldHub, HasStub):
+    """:class:`Minecraft` is the main object of interacting with Minecraft servers that have the mcpb-plugin_.
+    When constructing the class, a ``host`` and ``port`` of the server should be provided to which a connection will be built. They default to ``"localhost"`` and ``1789`` respectively.
+    All other worlds, events, entities and more are then received via the methods of that instance.
+
+    .. _mcpb-plugin: https://github.com/icezyclon/mcproto
+
+    >>> from mcpb import Minecraft
+    >>> mc = Minecraft()  # connect to localhost
+    >>> mc.postToChat("Hello Minecraft")  # send  message in chat
+
+    .. note::
+
+       Generally, it is sufficient to construct one :class:`Minecraft` instance per server or active connection.
+       However, it is generally possible to connect with multiple instances from the same or different hosts as the connection.
+
+    .. warning::
+
+       The connection used by the server is not encrypted or otherwise secured, meaning that any man-in-the-middle can read and modify any information sent between the program and the Minecraft server.
+       For security reasons it is recommended to connect from the same host as the server. By default, the plugin does only allow connections from ``localhost``.
+
+    :return: New :class:`Minecraft` instance connected to ``host`` and ``port``
+    :rtype: Minecraft
+    """
+
     def __init__(self, host: str = "localhost", port: int = 1789) -> None:
         self._addr = (host, port)
         self._channel = grpc.insecure_channel(f"{host}:{port}")
