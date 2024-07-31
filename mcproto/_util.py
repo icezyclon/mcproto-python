@@ -134,17 +134,17 @@ Value = TypeVar("Value")
 
 class ThreadSafeSingeltonCache:
     """This is a thread safe dictionary intended to be used as a cache.
-    Using the get_or_create function guarantees that every object returned for a given key is a singleton across all threads.
+    Using the get_or_create function guarantees that every object returned
+    for a given key is a singleton across all threads.
     Objects that are not in the cache will be created using factory or otherwise default_factory initially.
-    When useing use_weakref = True, then the values can be deleted by the Python garbage collector (GC) only if no other references,
-    aside from this cache, exist to the object.
-    Otherwise, with use_weakref = False, the keys are cached for the entire runtime of the program.
+    When use_weakref = True, then the values can be deleted by the Python garbage collector (GC) only if
+    no other references, aside from this cache, exist to the object.
+    Otherwise, use_weakref = False, the keys are cached for the entire runtime of the program.
 
     Note, ideally only the get_or_create function should be used to fill the cache, as this function will
     create the objects initially and return them in a thread safe way.
 
-    Note, preferably values should not be set directly or deleted, as that might violate the singleton invariant in some way.
-    Only do that if you are sure what you are doing.
+    Note, preferably values should not be set directly or deleted, as that might violate the singleton invariant in some way. Only do that if you are sure what you are doing.
     """
 
     def __init__(self, default_factory: Callable[[Key], Value], use_weakref: bool = False) -> None:
@@ -174,8 +174,9 @@ class ThreadSafeSingeltonCache:
     def get(self, key: Key, default=None) -> Value | None:
         """Return the value for key if key is in the cache, else default.
         If default is not given, it defaults to None, so that this method never raises a KeyError.
-        Does NOT create a new value in cache.
-        Please do NOT check for the existance of an object to then set it without holding the write lock first!
+        This function does not create a new value in cache.
+        If the function returns with default value, there is no guarantee that the entry has not
+        been created in the mean time! Do NOT set the value manually after checking with get, use get_or_create instead!
         """
         try:
             return self[key]
@@ -198,5 +199,5 @@ class ThreadSafeSingeltonCache:
                         strong_ref = factory(key)
                     else:
                         strong_ref = self._default_factory(key)
-                    self[key] = strong_ref
+                    self._cache[key] = strong_ref
         return strong_ref
