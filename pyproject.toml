@@ -6,7 +6,7 @@ requires = [
 
 [project]
 name = "mcproto"
-version = "1.18.2.1.4"
+version = "1.18.2.1.6"
 description="Library for communicating with Minecraft servers via same-named grpc protobuf plugin"
 readme = "README.md"
 license = {text = "LGPL-3.0-or-later"}
@@ -34,6 +34,7 @@ dev = [
   "pre-commit",
   "pytest",
   "pytest-mock",
+  "pytest-timeout",
   "types-protobuf",
   "types-setuptools",
 ]

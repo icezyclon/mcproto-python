@@ -5,7 +5,7 @@ from functools import partial
 from typing import Literal
 
 from ._base import HasStub, _PlayerProvider
-from ._util import ThreadSafeCachedKeyBasedFactory
+from ._util import ThreadSafeSingeltonCache
 from .entity import Entity
 from .exception import raise_on_error
 from .mcpb import MinecraftStub
@@ -235,7 +235,7 @@ class Player(Entity, HasStub):
 class _PlayerCache(_WorldHub, HasStub, _PlayerProvider):
     def __init__(self, stub: MinecraftStub) -> None:
         super().__init__(stub)
-        self._player_cache = ThreadSafeCachedKeyBasedFactory(partial(Player, self._stub, self))
+        self._player_cache = ThreadSafeSingeltonCache(partial(Player, self._stub, self))
         self._default_player: Player | None = None
 
     def _get_or_create_player(self, name: str) -> Player:

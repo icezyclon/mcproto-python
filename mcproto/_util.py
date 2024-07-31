@@ -1,112 +1,151 @@
+from __future__ import annotations
+
+import contextlib
 import threading
 import weakref
-from typing import Callable, Hashable, TypeAlias, TypeVar
+from typing import Callable, Generator, Hashable, TypeAlias, TypeVar
+
+__all__ = ["ReentrantRWLock", "ThreadSafeSingeltonCache"]
 
 
-# Originally from: https://gist.github.com/Eboubaker/6a0b807788088a764b2a4c156fda0e4b
 class ReentrantRWLock:
-    """
-    A lock object that allows many simultaneous "read locks", but only one "write lock."
-    it also ignores multiple write locks from the same thread
+    """This class implements reentrant read-write lock objects.
+
+    A read-write lock can be aquired in read mode or in write mode or both.
+    Many different readers are allowed while no thread holds the write lock.
+    While a writer holds the write lock, no other threads, aside from the writer,
+    may hold the read or the write lock.
+
+    A thread may upgrade the lock to write mode while already holding the read lock.
+    Similarly, a thread already having write access may aquire the read lock
+    (or may already have it), to retain read access when releasing the write lock.
+
+    A reentrant lock must be released by the thread that acquired it. Once a
+    thread has acquired a reentrant lock (read or write), the same thread may acquire it
+    again without blocking any number of times;
+    the thread must release each lock (read/write) the same number of times it has acquired it!
+
+    The lock provides contextmanagers in the form of `for_read()` and `for_write()`,
+    which automatically aquire and release the corresponding lock, e.g.,
+    >>> with lock.for_read():  # get read access until end of context
+    >>>     ...
+    >>>     with lock.for_write():  # upgrade to write access until end of inner
+    >>>         ...
     """
 
     def __init__(self) -> None:
         self._writer: int | None = None  # current writer
-        self._readers: list[int] = []  # list of unique readers
-        self._read_ready = threading.Condition(threading.Lock())
-        # stack for 'with' keyword for write or read operations, 0 for read 1 for write
-        self._with_ops_write: list[int] = []
-        self._ops_arr_lock = threading.Lock()  # lock for previous list
+        self._writer_count: int = 0  # number of times writer holding write lock
+        # set of current readers mapping to number of times holding read lock
+        # entry is missing if not holding the read lock (no 0 values)
+        self._readers: dict[int, int] = dict()
+        # main lock + condition, is used for:
+        # * protecting read/write access to _writer, _writer_times and _readers
+        # * is actively held when having write access (so no other thread has access)
+        # * future writers can wait() on the lock to be notified once nobody is reading/writing anymore
+        self._lock = threading.Condition(threading.RLock())  # reentrant
+
+    @contextlib.contextmanager
+    def for_read(self) -> Generator[ReentrantRWLock, None, None]:
+        """
+        used for 'with' block, e.g., with lock.for_read(): ...
+        """
+        try:
+            self.acquire_read()
+            yield self
+        finally:
+            self.release_read()
+
+    @contextlib.contextmanager
+    def for_write(self) -> Generator[ReentrantRWLock, None, None]:
+        """
+        used for 'with' block, e.g., with lock.for_write(): ...
+        """
+        try:
+            self.acquire_write()
+            yield self
+        finally:
+            self.release_write()
 
     def acquire_read(self) -> None:
         """
-        Acquire a read lock. Blocks only if a another thread has acquired the write lock.
+        Acquire one read lock. Blocks only if a another thread has acquired the write lock.
         """
         ident: int = threading.current_thread().ident  # type: ignore
-        if self._writer == ident or ident in self._readers:
-            return
-        with self._read_ready:
-            self._readers.append(ident)
+        with self._lock:
+            self._readers[ident] = self._readers.get(ident, 0) + 1
 
     def release_read(self) -> None:
         """
-        Release a read lock if exists from this thread
+        Release one currently held read lock from this thread.
         """
         ident: int = threading.current_thread().ident  # type: ignore
-        if self._writer == ident or ident not in self._readers:
-            return
-        with self._read_ready:
-            self._readers.remove(ident)
-            if len(self._readers) == 0:
-                self._read_ready.notify_all()
+        with self._lock:
+            if ident not in self._readers:
+                raise RuntimeError(
+                    f"Read lock was released while not holding it by thread {ident}"
+                )
+            if self._readers[ident] == 1:
+                del self._readers[ident]
+            else:
+                self._readers[ident] -= 1
+            if not self._readers:  # if no other readers remain
+                self._lock.notify()  # wake the next writer if any
 
     def acquire_write(self) -> None:
         """
-        Acquire a write lock. Blocks until there are no acquired read or write locks from another thread.
+        Acquire one write lock. Blocks until there are no acquired read or write locks from other threads.
         """
         ident: int = threading.current_thread().ident  # type: ignore
+        self._lock.acquire()  # is reentrant, so current writer can aquire again
         if self._writer == ident:
+            self._writer_count += 1
             return
-        self._read_ready.acquire()
-        me_included = 1 if ident in self._readers else 0
-        while len(self._readers) - me_included > 0:
-            self._read_ready.wait()
+
+        # do not be reader while waiting for write or notify will not be called
+        times_reading = self._readers.pop(ident, 0)
+        while len(self._readers) > 0:
+            self._lock.wait()
         self._writer = ident
+        self._writer_count += 1
+        if times_reading:
+            # restore number of read locks thread originally had
+            self._readers[ident] = times_reading
 
     def release_write(self) -> None:
         """
-        Release a write lock if exists from this thread.
+        Release one currently held write lock from this thread.
         """
-        if not self._writer or not self._writer == threading.current_thread().ident:
-            return
-        self._writer = None
-        self._read_ready.release()
-
-    def __enter__(self) -> None:
-        with self._ops_arr_lock:
-            if len(self._with_ops_write) == 0:
-                raise RuntimeError(
-                    "ReentrantRWLock: used 'with' block without call to for_read or for_write"
-                )
-            write = self._with_ops_write[-1]
-        if write:
-            self.acquire_write()
-        else:
-            self.acquire_read()
-
-    def __exit__(self, exc_type, exc_value, tb) -> bool:
-        with self._ops_arr_lock:
-            write = self._with_ops_write.pop()
-        if write:
-            self.release_write()
-        else:
-            self.release_read()
-        if exc_type is not None:
-            return False  # exception happened
-        return True
-
-    def for_read(self) -> "ReentrantRWLock":
-        """
-        used for 'with' block
-        """
-        with self._ops_arr_lock:
-            self._with_ops_write.append(0)
-        return self
-
-    def for_write(self) -> "ReentrantRWLock":
-        """
-        used for 'with' block
-        """
-        with self._ops_arr_lock:
-            self._with_ops_write.append(1)
-        return self
+        if self._writer != threading.current_thread().ident:
+            raise RuntimeError(
+                f"Write lock was released while not holding it by thread {threading.current_thread().ident}"
+            )
+        self._writer_count -= 1
+        if self._writer_count == 0:
+            self._writer = None
+            self._lock.notify()  # wake the next writer if any
+        self._lock.release()
 
 
 Key: TypeAlias = Hashable
 Value = TypeVar("Value")
 
 
-class ThreadSafeCachedKeyBasedFactory:
+class ThreadSafeSingeltonCache:
+    """This is a thread safe dictionary intended to be used as a cache.
+    Using the get_or_create function guarantees that every object returned
+    for a given key is a singleton across all threads.
+    Objects that are not in the cache will be created using factory or otherwise default_factory initially.
+    When use_weakref = True, then the values can be deleted by the Python garbage collector (GC) only if
+    no other references, aside from this cache, exist to the object.
+    Otherwise, use_weakref = False, the keys are cached for the entire runtime of the program.
+
+    Note, ideally only the get_or_create function should be used to fill the cache, as this function will
+    create the objects initially and return them in a thread safe way.
+
+    Note, preferably values should not be set directly or deleted, as that might violate the singleton invariant in some way. Only do that if you are sure what you are doing.
+    """
+
     def __init__(self, default_factory: Callable[[Key], Value], use_weakref: bool = False) -> None:
         self._default_factory = default_factory
         # lock must be reentrant, could deadlock otherwise (if constructing Impl in __init__ of Impl)
@@ -122,37 +161,38 @@ class ThreadSafeCachedKeyBasedFactory:
             return self._cache[key]
 
     def __setitem__(self, key: Key, item: Value) -> None:
+        """Prefer using the get_or_create function for creating items."""
         with self._lock.for_write():
             self._cache[key] = item
 
-    # Note: Deleting cannot happend explicitly, only via GC using weakref
-    # Otherwise, we could not guarantee that the value is singleton
-    # def __delitem__(self, key) -> None:
-    #     with self._lock.for_write():
-    #         del self._cache[key]
+    def __delitem__(self, key: Key) -> None:
+        """Use with care! Once an object is deleted from the cache a new one might be created (might not be singleton anymore)"""
+        with self._lock.for_write():
+            del self._cache[key]
 
-    # def clear(self) -> None:
-    #     with self._lock.for_write():
-    #         self._cache.clear()
+    def get(self, key: Key, default=None) -> Value | None:
+        """Return the value for key if key is in the cache, else default.
+        If default is not given, it defaults to None, so that this method never raises a KeyError.
+        This function does not create a new value in cache.
+        If the function returns with default value, there is no guarantee that the entry has not
+        been created in the mean time! Do NOT set the value manually after checking with get, use get_or_create instead!
+        """
+        try:
+            return self[key]
+        except KeyError:
+            return default
 
     def get_or_create(self, key: Key, factory: Callable[[Key], Value] | None = None) -> Value:
-        strong_ref = None
-        with self._lock.for_read():
-            try:
-                strong_ref = self._cache[key]
-            except KeyError:
-                # might race between any check like "key in self._cache" so just try access instead
-                # if self._cache is weakref (gc could run inbetween any two calls, therefore save strong reference in variable directly)
-                pass
-        # release read lock before aquiring write lock (could deadlock otherwise)
-        if strong_ref is None:
+        """Return singleton value for key or create value with factory (or otherwise default_factory) otherwise.
+        Guarantees that a value with given key is a singleton in the entire program, even across multiple threads.
+        """
+        _sentinel = object()  # do not use None, as None could be a legit value in cache
+        strong_ref = self.get(key, _sentinel)
+        if strong_ref is _sentinel:
             with self._lock.for_write():
                 # must check again as entry could have been created while waiting for write lock (race condition)
-                try:
-                    strong_ref = self._cache[key]
-                except KeyError:
-                    pass
-                if strong_ref is None:
+                strong_ref = self.get(key, _sentinel)
+                if strong_ref is _sentinel:
                     # now we can be sure nobody will create entry with key because we have write lock
                     if factory is not None:
                         strong_ref = factory(key)
