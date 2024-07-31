@@ -21,6 +21,7 @@ def test_single_threaded_upgrade():
     with lock.for_read():
         with lock.for_write():
             pass
+        assert lock._readers, "Released read lock incorrectly"
 
 
 @pytest.mark.timeout(TIMEOUT)
@@ -30,6 +31,7 @@ def test_single_threaded_reentrant_read():
     with lock.for_read():
         with lock.for_read():
             pass
+        assert lock._readers, "Released read lock too early"
 
 
 @pytest.mark.timeout(TIMEOUT)
@@ -39,6 +41,7 @@ def test_single_threaded_reentrant_write():
     with lock.for_write():
         with lock.for_write():
             pass
+        assert lock._writer is not None, "Released write lock too early"
 
 
 @pytest.mark.timeout(TIMEOUT)
@@ -48,6 +51,7 @@ def test_single_threaded_read_when_write():
     with lock.for_write():
         with lock.for_read():
             pass
+        assert lock._writer is not None, "Released write lock incorrectly"
 
 
 @pytest.mark.timeout(TIMEOUT)
@@ -60,6 +64,10 @@ def test_single_threaded_deep():
                 with lock.for_read():
                     with lock.for_write():
                         pass
+        assert lock._writer is None, "Did not release write lock correctly"
+        assert lock._readers, "Released read lock too early"
+    assert not lock._readers, "Did not release read lock correctly"
+    assert lock._writer is None, "Aquired write lock again??"
 
 
 @pytest.mark.timeout(TIMEOUT)
@@ -69,6 +77,17 @@ def test_lock_no_ambiguous_context():
     with pytest.raises(AttributeError):
         with lock:
             pass
+
+
+@pytest.mark.timeout(TIMEOUT)
+def test_lock_wrong_release():
+    lock = ReentrantRWLock()
+
+    with pytest.raises(RuntimeError):
+        lock.release_read()
+
+    with pytest.raises(RuntimeError):
+        lock.release_write()
 
 
 @pytest.mark.timeout(TIMEOUT)
