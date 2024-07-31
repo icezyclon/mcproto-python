@@ -116,16 +116,15 @@ class ReentrantRWLock:
         """
         Release one currently held write lock from this thread.
         """
-        with self._lock:
-            if self._writer != threading.current_thread().ident:
-                raise RuntimeError(
-                    f"Write lock was released while not holding it by thread {threading.current_thread().ident}"
-                )
-            self._writer_count -= 1
-            if self._writer_count == 0:
-                self._writer = None
-                self._lock.notify()  # wake the next writer if any
-            self._lock.release()
+        if self._writer != threading.current_thread().ident:
+            raise RuntimeError(
+                f"Write lock was released while not holding it by thread {threading.current_thread().ident}"
+            )
+        self._writer_count -= 1
+        if self._writer_count == 0:
+            self._writer = None
+            self._lock.notify()  # wake the next writer if any
+        self._lock.release()
 
 
 Key: TypeAlias = Hashable
