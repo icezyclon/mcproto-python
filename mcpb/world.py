@@ -355,12 +355,14 @@ class World(_DefaultWorld, HasStub, _EntityProvider):
 
 
 class _WorldHub(HasStub, _EntityProvider):
+    """All functions regarding getting World objects and interacting with different world, such as the nether or the end, can be found here."""
+
     def __init__(self, stub: MinecraftStub) -> None:
         super().__init__(stub)
         self._worlds_by_name: dict[str, World] = dict()
 
     def refreshWorlds(self, remake: bool = False) -> None:
-        """Refresh worlds if you, for example, load a new one with Multiverse Core Plugin"""
+        """Refresh worlds if you, for example, load a new one with Multiverse Core Plugin. By default, the worlds will be refreshed on first use."""
         # TODO: this is not thread safe
         response = self._stub.accessWorlds(pb.WorldRequest())
         raise_on_error(response.status)

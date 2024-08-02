@@ -34,7 +34,7 @@ class Minecraft(_DefaultWorld, _EventHandler, _PlayerCache, _EntityCache, _World
     .. note::
 
        Generally, it is sufficient to construct one :class:`Minecraft` instance per server or active connection.
-       However, it is generally possible to connect with multiple instances from the same or different hosts as the connection.
+       However, it is also possible to connect with multiple instances from the same or different hosts as the connection.
 
     .. warning::
 
