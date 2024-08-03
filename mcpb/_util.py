@@ -149,7 +149,9 @@ class ThreadSafeSingeltonCache:
        Preferably values should not be set directly or deleted, as that might violate the singleton invariant in some way. Only do that if you are sure what you are doing.
     """
 
-    def __init__(self, default_factory: Callable[[Key], Value], use_weakref: bool = False) -> None:
+    def __init__(
+        self, default_factory: Callable[[Key], Value] | None, use_weakref: bool = False
+    ) -> None:
         self._default_factory = default_factory
         # lock must be reentrant, could deadlock otherwise (if constructing Impl in __init__ of Impl)
         self._lock = ReentrantRWLock()
@@ -213,6 +215,10 @@ class ThreadSafeSingeltonCache:
                     # now we can be sure nobody will create entry with key because we have write lock
                     if factory is not None:
                         strong_ref = factory(key)
+                    elif self._default_factory is None:
+                        raise RuntimeError(
+                            "Neither `factory` nor `default_factory` were set, entry could not be created"
+                        )
                     else:
                         strong_ref = self._default_factory(key)
                     self._cache[key] = strong_ref
@@ -250,3 +256,11 @@ class ThreadSafeSingeltonCache:
         """
         with self._lock.for_read():
             return tuple(self._cache.items())
+
+    def clear(self) -> None:
+        """Clears the cache.
+        Should probably not be used again afterwards, as the newly created values might not be singletons anymore,
+        e.g., other threads could still hold references to old objects.
+        """
+        with self._lock.for_write():
+            self._cache.clear()

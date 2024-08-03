@@ -50,3 +50,20 @@ def test_basic_use_weakref():
     del o
     gc.collect()
     assert cache.get(val) is None
+
+
+@pytest.mark.timeout(TIMEOUT)
+def test_no_default():
+    class TestObject:
+        def __init__(self, val) -> None:
+            self.val = val
+
+    with pytest.raises(TypeError):
+        ThreadSafeSingeltonCache()  # should be explicit
+
+    cache = ThreadSafeSingeltonCache(None)
+
+    with pytest.raises(RuntimeError):
+        cache.get_or_create(1)
+
+    assert cache.get_or_create(2, TestObject)

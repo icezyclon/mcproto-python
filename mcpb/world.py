@@ -368,13 +368,7 @@ class _WorldHub(_HasStub, _EntityProvider):
 
     def __init__(self, stub: MinecraftStub) -> None:
         super().__init__(stub)
-
-        def no_key_yet(x):
-            raise RuntimeError(
-                "Worlds require key and name, factory should be constructed on the fly"
-            )
-
-        self._world_by_name_cache = ThreadSafeSingeltonCache(no_key_yet)
+        self._world_by_name_cache = ThreadSafeSingeltonCache(None)
 
     @property
     def worlds(self) -> tuple[World, ...]:

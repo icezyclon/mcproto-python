@@ -48,7 +48,6 @@ class Minecraft(_DefaultWorld, _EventHandler, _PlayerCache, _EntityCache, _World
         self._channel = grpc.insecure_channel(f"{host}:{port}")
         stub = MinecraftStub(self._channel)
         super().__init__(stub)
-        atexit.register(self._cleanup)
 
     def __repr__(self) -> str:
         host, port = self._addr
@@ -56,7 +55,6 @@ class Minecraft(_DefaultWorld, _EventHandler, _PlayerCache, _EntityCache, _World
 
     def _cleanup(self) -> None:
         logging.debug("Minecraft: _cleanup: called, closing channel...")
-        atexit.unregister(self._cleanup)
         _EventHandler._cleanup(self)
         self._channel.close()
         logging.debug("Minecraft: _cleanup: done")

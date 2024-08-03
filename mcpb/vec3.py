@@ -13,7 +13,7 @@ _NumVec = Union["Vec3", _NumType]
 __all__ = ["Vec3"]
 
 
-@dataclass(frozen=True, eq=True, order=True, repr=True)
+@dataclass(frozen=True, slots=True, eq=True, order=True, repr=True)
 class Vec3:
     """:class:`Vec3` is a 3-dimensional vector for representing ``x``, ``y`` and ``z`` coordinates.
     Each instance of this class is **frozen**, so calculations on it yield new instances of :class:`Vec3` instead of changing the x, y and z values directly.
@@ -251,11 +251,18 @@ if __name__ == "__main__":
     # run some performance benchmarks for dataclass Vec3
     import sys
     import timeit
-    from statistics import mean
+    from dataclasses import FrozenInstanceError
 
     print("(Aprox.) Size of a Vec3:", sys.getsizeof(Vec3(1, -333, 98765)))
 
-    repeat = 10
+    print("Using slots:", hasattr(Vec3(), "__slots__"))
+    is_frozen = False
+    try:
+        Vec3().x = 5  # type: ignore
+    except FrozenInstanceError:
+        is_frozen = True
+    print("Using frozen:", is_frozen)
+
     benchmarks = [
         "Vec3(1, -3, 2)",
         "Vec3(x=1, y=-3, z=2)",
@@ -263,8 +270,8 @@ if __name__ == "__main__":
         "Vec3(1,2,3).cross(Vec3(3,2,1))",
     ]
     for bm in benchmarks:
-        times = [timeit.timeit(bm, globals=globals()) for _ in range(repeat)]
-        print(f"{mean(times):.3f}", "->", bm)
+        times = timeit.timeit(bm, globals=globals())
+        print(f"{times:.3f}", "->", bm)
 
     # fastest is frozen=False and slots=True
     # then frozen=False and slots=False
