@@ -133,17 +133,20 @@ Value = TypeVar("Value")
 
 class ThreadSafeSingeltonCache:
     """This is a thread safe dictionary intended to be used as a cache.
-    Using the get_or_create function guarantees that every object returned
+    Using the :func:`get_or_create` function guarantees that every object returned
     for a given key is a singleton across all threads.
     Objects that are not in the cache will be created using factory or otherwise default_factory initially.
-    When use_weakref = True, then the values can be deleted by the Python garbage collector (GC) only if
+    When ``use_weakref = True``, then the values can be deleted by the Python garbage collector (GC) only if
     no other references, aside from this cache, exist to the object.
-    Otherwise, use_weakref = False, the keys are cached for the entire runtime of the program.
+    Otherwise, ``use_weakref = False``, the keys are cached for the entire runtime of the program.
 
-    Note, ideally only the get_or_create function should be used to fill the cache, as this function will
-    create the objects initially and return them in a thread safe way.
+    .. note::
 
-    Note, preferably values should not be set directly or deleted, as that might violate the singleton invariant in some way. Only do that if you are sure what you are doing.
+       Ideally only the get_or_create function should be used to fill the cache, as this function will create the objects initially and return them in a thread safe way.
+
+    .. note::
+
+       Preferably values should not be set directly or deleted, as that might violate the singleton invariant in some way. Only do that if you are sure what you are doing.
     """
 
     def __init__(self, default_factory: Callable[[Key], Value], use_weakref: bool = False) -> None:
@@ -156,12 +159,20 @@ class ThreadSafeSingeltonCache:
     def uses_weakref(self) -> bool:
         return isinstance(self._cache, weakref.WeakValueDictionary)
 
+    def __bool__(self) -> bool:
+        with self._lock.for_read():
+            return bool(self._cache)
+
+    def __len__(self) -> int:
+        with self._lock.for_read():
+            return len(self._cache)
+
     def __getitem__(self, key: Key) -> Value:
         with self._lock.for_read():
             return self._cache[key]
 
     def __setitem__(self, key: Key, item: Value) -> None:
-        """Prefer using the get_or_create function for creating items."""
+        """Prefer using the :func:`get_or_create` function for creating items."""
         with self._lock.for_write():
             self._cache[key] = item
 
@@ -171,11 +182,14 @@ class ThreadSafeSingeltonCache:
             del self._cache[key]
 
     def get(self, key: Key, default=None) -> Value | None:
-        """Return the value for key if key is in the cache, else default.
-        If default is not given, it defaults to None, so that this method never raises a KeyError.
+        """Return the value for `key` if `key` is in the cache, else `default`.
+        If `default` is not given, it defaults to None, so that this method never raises a KeyError.
         This function does not create a new value in cache.
         If the function returns with default value, there is no guarantee that the entry has not
-        been created in the mean time! Do NOT set the value manually after checking with get, use get_or_create instead!
+        been created in the mean time! Do NOT set the value manually after checking with get, use :func:`get_or_create` instead!
+
+        :return: the value assosiated with `key` or `default` if it does not exist
+        :rtype: Value | None
         """
         try:
             return self[key]
@@ -183,8 +197,11 @@ class ThreadSafeSingeltonCache:
             return default
 
     def get_or_create(self, key: Key, factory: Callable[[Key], Value] | None = None) -> Value:
-        """Return singleton value for key or create value with factory (or otherwise default_factory) otherwise.
+        """Return singleton value for `key` or create value with `factory` (or otherwise `default_factory`) otherwise.
         Guarantees that a value with given key is a singleton in the entire program, even across multiple threads.
+
+        :return: the value assosiated with `key`, newly created if it did not exist
+        :rtype: Value
         """
         _sentinel = object()  # do not use None, as None could be a legit value in cache
         strong_ref = self.get(key, _sentinel)
@@ -200,3 +217,36 @@ class ThreadSafeSingeltonCache:
                         strong_ref = self._default_factory(key)
                     self._cache[key] = strong_ref
         return strong_ref
+
+    def keys(self) -> tuple[Key]:
+        """Returns a tuple of all keys which currently exist.
+        Changes that happen to the cache after this function returns are not reflected in the tuple.
+
+        .. warning::
+
+        In case ``uses_weakre == True`` no guarantee is given that when this function returns
+        the returned keys actually exist.
+
+        :return: a tuple of keys that currently exist
+        :rtype: tuple[Key]
+        """
+        with self._lock.for_read():
+            return tuple(self._cache.keys())
+
+    def values(self) -> tuple[Value]:
+        """Returns a tuple of all values which currently exist.
+
+        :return:  a tuple of values that currently exist
+        :rtype: tuple[Value]
+        """
+        with self._lock.for_read():
+            return tuple(self._cache.values())
+
+    def items(self) -> tuple[tuple[Key, Value]]:
+        """Returns a tuple of all key value pairs which currently exist.
+
+        :return:  a tuple of key value pairs that currently exist
+        :rtype: tuple[tuple[Key, Value]]
+        """
+        with self._lock.for_read():
+            return tuple(self._cache.items())

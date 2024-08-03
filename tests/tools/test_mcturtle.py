@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, PropertyMock, call, patch
+from unittest.mock import MagicMock, PropertyMock, call
 
 import pytest
 from pytest_mock import MockerFixture
@@ -35,7 +35,7 @@ def test_init_correct_all_provided():
     mc = MagicMock(spec=Minecraft)
     assert isinstance(mc, Minecraft)
     pos = Vec3(1, -2, 3)
-    world = World(mc, "my_test_world", "minecraft:test", mc)
+    world = World(mc, mc, "minecraft:test", "my_test_world")
 
     # execute
     t = Turtle(mc, pos, world)

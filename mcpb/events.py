@@ -9,7 +9,7 @@ from threading import Thread
 
 import grpc
 
-from ._base import HasStub, _EntityProvider, _PlayerProvider
+from ._base import _EntityProvider, _HasStub, _PlayerProvider
 from ._proto import MinecraftStub
 from ._proto import minecraft_pb2 as pb
 from ._types import DIRECTION
@@ -115,7 +115,7 @@ class _EventPoller:
             target=self._poll, name=f"EventPoller-EventType-{self.key}", daemon=True
         )
         self.thread_cancelled = False
-        logging.debug(f"_EventPoller: __init__: Starting thread...")
+        logging.debug("_EventPoller: __init__: Starting thread...")
         self.thread.start()
 
     def _cleanup(self) -> None:
@@ -127,18 +127,18 @@ class _EventPoller:
         logging.debug("EventPoller: _cleanup: joined thread")
 
     def _poll(self) -> None:
-        logging.debug(f"EventPoller: _poll: started polling")
+        logging.debug("EventPoller: _poll: started polling")
         try:
             for rpc_event in self.stream:
                 logging.debug(f"EventPoller: _poll: putting event in queue: {rpc_event}")
                 self.events.put(self._parse_to_event(rpc_event), block=True, timeout=None)
                 if self.thread_cancelled:
-                    logging.info(f"EventPoller: _poll: stream was cancelled via variable")
+                    logging.info("EventPoller: _poll: stream was cancelled via variable")
                     return
         except grpc.RpcError as e:
             if hasattr(e, "code") and callable(e.code) and e.code() == grpc.StatusCode.CANCELLED:
                 if self.thread_cancelled:
-                    logging.info(f"EventPoller: _poll: stream was cancelled")
+                    logging.info("EventPoller: _poll: stream was cancelled")
                 else:
                     logging.error("EventPoller: _poll: stream was cancelled, but NOT via cleanup!")
                     raise e
@@ -208,18 +208,18 @@ class _EventPoller:
         return event
 
 
-class _EventHandler(HasStub, _EntityProvider, _PlayerProvider):
+class _EventHandler(_HasStub, _EntityProvider, _PlayerProvider):
     def __init__(self, stub: MinecraftStub) -> None:
         super().__init__(stub)
         self._poller: dict[int, _EventPoller] = {}
 
     def _cleanup(self) -> None:
-        logging.debug(f"EventHandler: _cleanup: called...")
+        logging.debug("EventHandler: _cleanup: called...")
         for key, poller in self._poller.items():
             logging.debug(f"EventHandler: _cleanup: calling cleanup in poller with key {key}")
             poller._cleanup()
         self._poller.clear()
-        logging.debug(f"EventHandler: _cleanup: done")
+        logging.debug("EventHandler: _cleanup: done")
 
     def _get_poller(self, key: int) -> _EventPoller:
         if key not in self._poller:

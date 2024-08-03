@@ -12,8 +12,8 @@ if TYPE_CHECKING:
     from .player import Player
 
 
-class HasStub:
-    """Has a MinecraftStub and can use it for very generic things, such as running commands"""
+class _HasStub:
+    """Run general, server-wide commands as if typed in chat."""
 
     def __init__(self, stub: MinecraftStub) -> None:
         if not isinstance(stub, MinecraftStub):
@@ -31,6 +31,15 @@ class HasStub:
         )
 
     def runCommand(self, command: str) -> None:
+        """Run the `command` as if it was typed in chat as ``/``-command.
+        The command is run with the highest possible permission and no other modifiers.
+
+        >>> mc.runCommand("kill @e")
+        >>> mc.runCommand("gamerule doDaylightCycle false")
+
+        :param command: the command without the slash ``/``
+        :type command: str
+        """
         response = self._stub.runCommand(pb.CommandRequest(command=command))
         raise_on_error(response)
 

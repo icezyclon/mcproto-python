@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 from functools import partial
 
-from ._base import HasStub, _EntityProvider
+from ._base import _EntityProvider, _HasStub
 from ._proto import MinecraftStub
 from ._proto import minecraft_pb2 as pb
 from ._types import COLOR
@@ -20,7 +20,7 @@ CACHE_ENTITY_TIME = 0.2
 ALLOW_UNLOADED_ENTITY_OPS = True
 
 
-class Entity(HasStub):
+class Entity(_HasStub):
     def __init__(self, stub: MinecraftStub, worldhub: _WorldHub, entity_id: str) -> None:
         super().__init__(stub)
         self._worldhub = worldhub
@@ -283,7 +283,7 @@ class Entity(HasStub):
         self._world = newworld
 
 
-class _EntityCache(_WorldHub, HasStub, _EntityProvider):
+class _EntityCache(_WorldHub, _HasStub, _EntityProvider):
     def __init__(self, stub: MinecraftStub) -> None:
         super().__init__(stub)
         self._entity_cache = ThreadSafeSingeltonCache(

@@ -7,18 +7,16 @@ requires = [
 [project]
 name = "mcpb"
 version = "1.18.2.1.6"
-description="Library for communicating with Minecraft servers via same-named grpc protobuf plugin"
+description = "Library for communicating with Minecraft servers via same-named grpc protobuf plugin"
 readme = "README.md"
-license = {text = "LGPL-3.0-or-later"}
-authors = [
-    {name = "Felix Wallner", email = "felix.wallner@protonmail.com"},
-]
+license = { text = "LGPL-3.0-or-later" }
+authors = [{ name = "Felix Wallner", email = "felix.wallner@protonmail.com" }]
 requires-python = ">=3.10"
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
-    "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+  "Operating System :: OS Independent",
 ]
 dependencies = [
   "grpcio",
@@ -35,6 +33,7 @@ dev = [
   "pytest",
   "pytest-mock",
   "pytest-timeout",
+  "sphinx",
   "types-protobuf",
   "types-setuptools",
 ]

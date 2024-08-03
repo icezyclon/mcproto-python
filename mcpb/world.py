@@ -1,17 +1,20 @@
 from __future__ import annotations
 
+from functools import partial
+
 from . import entity
-from ._base import HasStub, _EntityProvider
+from ._base import _EntityProvider, _HasStub
 from ._proto import MinecraftStub
 from ._proto import minecraft_pb2 as pb
 from ._types import CARDINAL, COLOR, DIRECTION
+from ._util import ThreadSafeSingeltonCache
 from .exception import raise_on_error
 from .vec3 import Vec3
 
 MAX_BLOCKS = 50000  # TODO: replace with block stream
 
 
-class _DefaultWorld(HasStub, _EntityProvider):
+class _DefaultWorld(_HasStub, _EntityProvider):
     @property
     def pvp(self) -> bool:
         # TODO: returning if ANY world has pvp
@@ -308,14 +311,14 @@ class _DefaultWorld(HasStub, _EntityProvider):
         )
 
 
-class World(_DefaultWorld, HasStub, _EntityProvider):
+class World(_DefaultWorld, _HasStub, _EntityProvider):
     def __init__(
-        self, stub: MinecraftStub, name: str, key: str, entity_provider: _EntityProvider
+        self, stub: MinecraftStub, entity_provider: _EntityProvider, key: str, name: str
     ) -> None:
         super().__init__(stub)
-        self._name = name
-        self._key = key
         self._entity_provider = entity_provider
+        self._key = key
+        self._name = name
 
     def _get_or_create_entity(self, entity_id: str):
         return self._entity_provider._get_or_create_entity(entity_id)
@@ -325,12 +328,12 @@ class World(_DefaultWorld, HasStub, _EntityProvider):
         return pb.World(name=self.name)
 
     @property
-    def name(self) -> str:
-        return self._name
-
-    @property
     def key(self) -> str:
         return self._key
+
+    @property
+    def name(self) -> str:
+        return self._name
 
     @property
     def pvp(self) -> bool:
@@ -354,67 +357,66 @@ class World(_DefaultWorld, HasStub, _EntityProvider):
         return super().runCommand(command)
 
 
-class _WorldHub(HasStub, _EntityProvider):
-    """All functions regarding getting World objects and interacting with different world, such as the nether or the end, can be found here."""
+class _WorldHub(_HasStub, _EntityProvider):
+    """All functions regarding getting World objects and interacting with different worlds.
+
+    .. note::
+
+       What is called :class:`World` here is referred to as a dimension in game.
+
+    """
 
     def __init__(self, stub: MinecraftStub) -> None:
         super().__init__(stub)
-        self._worlds_by_name: dict[str, World] = dict()
 
-    def refreshWorlds(self, remake: bool = False) -> None:
-        """Refresh worlds if you, for example, load a new one with Multiverse Core Plugin. By default, the worlds will be refreshed on first use."""
-        # TODO: this is not thread safe
-        response = self._stub.accessWorlds(pb.WorldRequest())
-        raise_on_error(response.status)
-        self._worlds_by_name = {
-            world.name: (
-                World(self._stub, world.name, world.info.key, self)
-                if remake or world.name not in self._worlds_by_name
-                else self._worlds_by_name[world.name]
+        def no_key_yet(x):
+            raise RuntimeError(
+                "Worlds require key and name, factory should be constructed on the fly"
             )
-            for world in response.worlds
-        }
+
+        self._world_by_name_cache = ThreadSafeSingeltonCache(no_key_yet)
 
     @property
     def worlds(self) -> tuple[World, ...]:
-        if not self._worlds_by_name:
+        """Give a tuple of all worlds loaded on the server.
+        Does not automatically call :func:`refreshWorlds`.
+
+        :return: A tuple of all worlds loaded on the server
+        :rtype: tuple[World, ...]
+        """
+        if not self._world_by_name_cache:
             self.refreshWorlds()
-        return tuple(self._worlds_by_name.values())
+        return tuple(self._world_by_name_cache.values())
 
     @property
     def overworld(self) -> World:
-        for world in self.worlds:
-            if world.key == "minecraft:overworld":
-                # if not world.name.endswith("_nether") and not world.name.endswith("_the_end"):
-                return world
-        raise_on_error(pb.Status(code=pb.WORLD_NOT_FOUND))
+        """Identical to :func:`getWorldByKey` with key ``"minecraft:overworld"``.
+
+        :return: The overworld world :class:`World` object
+        :rtype: World
+        """
+        return self.getWorldByKey("minecraft:overworld")
 
     @property
     def nether(self) -> World:
-        for world in self.worlds:
-            if world.key == "minecraft:the_nether":
-                # if world.name.endswith("_nether"):
-                return world
-        raise_on_error(pb.Status(code=pb.WORLD_NOT_FOUND))
+        """Identical to :func:`getWorldByKey` with key ``"minecraft:the_nether"``.
+
+        :return: The nether world :class:`World` object
+        :rtype: World
+        """
+        return self.getWorldByKey("minecraft:the_nether")
 
     @property
     def end(self) -> World:
-        for world in self.worlds:
-            if world.key == "minecraft:the_end":
-                # if world.name.endswith("_the_end"):
-                return world
-        raise_on_error(pb.Status(code=pb.WORLD_NOT_FOUND))
+        """Identical to :func:`getWorldByKey` with key ``"minecraft:the_end"``.
 
-    def getWorldByName(self, name: str) -> World:
-        """World name == Folder name, eg. 'world', 'world_the_nether' or 'world_the_end'"""
-        if not self._worlds_by_name:
-            self.refreshWorlds()
-        if name not in self._worlds_by_name:
-            raise_on_error(pb.Status(code=pb.WORLD_NOT_FOUND, extra="name=" + name))
-        return self._worlds_by_name[name]
+        :return: The end world :class:`World` object
+        :rtype: World
+        """
+        return self.getWorldByKey("minecraft:the_end")
 
     def getWorldByKey(self, key: str) -> World:
-        """The ``key`` of a world is the minecraft internal name/id.
+        """The `key` of a world is the dimensions internal name/id.
         Typically a regular server has the following worlds/keys:
 
         - ``"minecraft:overworld"``
@@ -425,15 +427,13 @@ class _WorldHub(HasStub, _EntityProvider):
 
         The ``"minecraft:"`` prefix may be omitted, e.g., ``"the_nether"``.
 
-        If the given ``key`` does not exist an exception is raised.
+        If the given `key` does not exist an exception is raised.
 
         :param key: Internal name/id of the world, such as ``"minecraft:the_nether"`` or ``"the_nether"``
         :type key: str
         :return: The corresponding :class:`World` object
         :rtype: World
         """
-        #         Use :method:`Keeper.storedata` to store the object's data in
-        # `Keeper.data`:instance_attribute:.
         parts = key.split(":", maxsplit=1)
         if len(parts) == 1:
             key = "minecraft:" + key
@@ -441,3 +441,43 @@ class _WorldHub(HasStub, _EntityProvider):
             if world.key == key:
                 return world
         raise_on_error(pb.Status(code=pb.WORLD_NOT_FOUND, extra="key=" + key))
+
+    def getWorldByName(self, name: str) -> World:
+        """The `name` of a world is the folder or namespace the world resides in.
+        The setting for the world the server opens is found in ``server.properties``.
+        A typical, unmodified PaperMC_ server will save the worlds in the following folders:
+
+        .. _PaperMC: https://papermc.io/
+
+        - ``"world"``, for the overworld
+
+        - ``"world_the_nether"``, for the nether
+
+        - ``"world_the_end"``, for the end
+
+        The name of the overworld (default ``world``) is used as the prefix for the other folders.
+
+        If the given `name` does not exist an exception is raised.
+
+        :param name: Foldername the world is saved in, such as ``world``
+        :type name: str
+        :return: The corresponding :class:`World` object
+        :rtype: World
+        """
+        if not self._world_by_name_cache:
+            self.refreshWorlds()
+        world = self._world_by_name_cache.get(name)
+        if world is None:
+            raise_on_error(pb.Status(code=pb.WORLD_NOT_FOUND, extra="name=" + name))
+        return world
+
+    def refreshWorlds(self) -> None:
+        """Fetches the currently loaded worlds from server and updates the world objects.
+        This should only be called if the loaded worlds on the server change, for example, with the Multiverse Core Plugin.
+        By default, the worlds will be refreshed on first use only.
+        """
+        response = self._stub.accessWorlds(pb.WorldRequest())
+        raise_on_error(response.status)
+        for world in response.worlds:
+            factory = partial(World, self._stub, self, world.info.key)
+            self._world_by_name_cache.get_or_create(world.name, factory)

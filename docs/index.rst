@@ -23,7 +23,7 @@ Minecraft - Connection
 Commands
 --------
 
-.. autoclass:: mcpb._base.HasStub
+.. autoclass:: mcpb._base._HasStub
 
 Entities
 --------
@@ -78,10 +78,3 @@ Vec3 - Coordinates
 ==================
 
 .. autoclass:: mcpb.Vec3
-
------
-
-Chat Text Colors
-================
-
-.. automodule:: mcpb.text

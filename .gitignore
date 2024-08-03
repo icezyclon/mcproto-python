@@ -1,6 +1,5 @@
 *.proto
 proto/
-_build/
 
 ### Python ###
 # Created and adapted from https://www.toptal.com/developers/gitignore/api/python,

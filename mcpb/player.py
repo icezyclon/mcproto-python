@@ -4,7 +4,7 @@ import time
 from functools import partial
 from typing import Literal
 
-from ._base import HasStub, _PlayerProvider
+from ._base import _HasStub, _PlayerProvider
 from ._proto import MinecraftStub
 from ._proto import minecraft_pb2 as pb
 from ._util import ThreadSafeSingeltonCache
@@ -18,7 +18,7 @@ CACHE_PLAYER_TIME = 0.2
 ALLOW_OFFLINE_PLAYER_OPS = True
 
 
-class Player(Entity, HasStub):
+class Player(Entity, _HasStub):
     def __init__(self, stub: MinecraftStub, worldhub: _WorldHub, name: str) -> None:
         if not isinstance(name, str):
             raise TypeError("Player name must be of type str")
@@ -104,19 +104,19 @@ class Player(Entity, HasStub):
 
     # server access commands cannot be executed via 'execute as ...'
     def kick(self) -> None:
-        HasStub.runCommand(self, f"kick {self.name}")
+        _HasStub.runCommand(self, f"kick {self.name}")
 
     def ban(self) -> None:
-        HasStub.runCommand(self, f"ban {self.name}")
+        _HasStub.runCommand(self, f"ban {self.name}")
 
     def pardon(self) -> None:
-        HasStub.runCommand(self, f"pardon {self.name}")
+        _HasStub.runCommand(self, f"pardon {self.name}")
 
     def op(self) -> None:
-        HasStub.runCommand(self, f"op {self.name}")
+        _HasStub.runCommand(self, f"op {self.name}")
 
     def deop(self) -> None:
-        HasStub.runCommand(self, f"deop {self.name}")
+        _HasStub.runCommand(self, f"deop {self.name}")
 
     # properties that have different stub entpoints than entity
     @property
@@ -232,7 +232,7 @@ class Player(Entity, HasStub):
         self._world = newworld
 
 
-class _PlayerCache(_WorldHub, HasStub, _PlayerProvider):
+class _PlayerCache(_WorldHub, _HasStub, _PlayerProvider):
     def __init__(self, stub: MinecraftStub) -> None:
         super().__init__(stub)
         self._player_cache = ThreadSafeSingeltonCache(partial(Player, self._stub, self))
