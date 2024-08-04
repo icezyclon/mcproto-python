@@ -284,7 +284,7 @@ class _EventHandler(_HasStub, _EntityProvider, _PlayerProvider):
 
     .. note::
 
-       In both cases, events will only be captured after the first call of either poll*EventName* or registerCallback*EventName*
+       In both cases, events will only be captured *after the first call* of either poll*EventName* or registerCallback*EventName*
        and indefinitly until :func:`stopEventPollingAndClearCallbacks` is called.
 
     """

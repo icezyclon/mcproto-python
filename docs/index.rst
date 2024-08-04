@@ -51,24 +51,6 @@ Events
 
 .. autoclass:: mcpb.events._EventHandler
 
-.. autoclass:: mcpb.events.PlayerJoinEvent
-   :inherited-members:
-
-.. autoclass:: mcpb.events.PlayerLeaveEvent
-   :inherited-members:
-
-.. autoclass:: mcpb.events.PlayerDeathEvent
-   :inherited-members:
-
-.. autoclass:: mcpb.events.ChatEvent
-   :inherited-members:
-
-.. autoclass:: mcpb.events.BlockHitEvent
-   :inherited-members:
-
-.. autoclass:: mcpb.events.ProjectileHitEvent
-   :inherited-members:
-
 -----
 
 Entity
@@ -96,3 +78,24 @@ Vec3 - Coordinates
 ==================
 
 .. autoclass:: mcpb.Vec3
+
+Events Types
+============
+
+.. autoclass:: mcpb.events.PlayerJoinEvent
+   :inherited-members:
+
+.. autoclass:: mcpb.events.PlayerLeaveEvent
+   :inherited-members:
+
+.. autoclass:: mcpb.events.PlayerDeathEvent
+   :inherited-members:
+
+.. autoclass:: mcpb.events.ChatEvent
+   :inherited-members:
+
+.. autoclass:: mcpb.events.BlockHitEvent
+   :inherited-members:
+
+.. autoclass:: mcpb.events.ProjectileHitEvent
+   :inherited-members:
