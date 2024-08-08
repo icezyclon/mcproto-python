@@ -39,7 +39,7 @@ class Minecraft(_DefaultWorld, _EventHandler, _PlayerCache, _EntityCache, _World
     .. warning::
 
        The connection used by the server is not encrypted or otherwise secured, meaning that any man-in-the-middle can read and modify any information sent between the program and the Minecraft server.
-       For security reasons it is recommended to connect from the same host as the server. By default, the plugin does only allow connections from ``localhost`` to prevent exploits.
+       For security reasons it is recommended to connect from the same host as the server. By default, the plugin does only allow connections from ``localhost`` to prevent access and exploits from third parties.
 
     """
 

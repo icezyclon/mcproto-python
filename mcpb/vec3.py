@@ -237,6 +237,24 @@ class Vec3:
     def north(self, n: _NumType = 1) -> Vec3:
         return Vec3(self.x, self.y, self.z - n)
 
+    def addX(self, n: _NumType = 1) -> Vec3:
+        return Vec3(self.x + n, self.y, self.z)
+
+    def addY(self, n: _NumType = 1) -> Vec3:
+        return Vec3(self.x, self.y + n, self.z)
+
+    def addZ(self, n: _NumType = 1) -> Vec3:
+        return Vec3(self.x, self.y, self.z + n)
+
+    def addXY(self, n: _NumType = 1) -> Vec3:
+        return Vec3(self.x + n, self.y + n, self.z)
+
+    def addXZ(self, n: _NumType = 1) -> Vec3:
+        return Vec3(self.x + n, self.y, self.z + n)
+
+    def addYZ(self, n: _NumType = 1) -> Vec3:
+        return Vec3(self.x, self.y + n, self.z + n)
+
     def withX(self, n: _NumType) -> Vec3:
         return Vec3(n, self.y, self.z)
 
@@ -245,6 +263,15 @@ class Vec3:
 
     def withZ(self, n: _NumType) -> Vec3:
         return Vec3(self.x, self.y, n)
+
+    def withXY(self, n: _NumType) -> Vec3:
+        return Vec3(n, n, self.z)
+
+    def withXZ(self, n: _NumType) -> Vec3:
+        return Vec3(n, self.y, n)
+
+    def withYZ(self, n: _NumType) -> Vec3:
+        return Vec3(self.x, n, n)
 
 
 if __name__ == "__main__":

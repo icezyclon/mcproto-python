@@ -5,12 +5,7 @@ import pytest
 from mcpb._util import ThreadSafeSingeltonCache
 
 # Note: set timeout for these tests, in case of deadlock we want to fail the test
-# Should be at least 3 * SLEEP_TIME
-TIMEOUT = 3
-
-# Some tests use sleeps to simulate possible race conditions
-# Define how long this should be - test precision is dependend on this!
-SLEEP_TIME = 0.2
+TIMEOUT = 1
 
 
 @pytest.mark.timeout(TIMEOUT)

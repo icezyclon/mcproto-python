@@ -49,50 +49,51 @@ WARN_DROPPED_INTERVAL: int = (
 class Event:
     timestamp: float = field(
         init=False, repr=False, compare=True, hash=False, default_factory=time.time
-    )
+    )  #: the timestamp when the event was received. Will be used for sorting events by default
 
 
 @dataclass(frozen=True, slots=True)
 class PlayerJoinEvent(Event):
-    player: Player
+    player: Player  #: the :class:`Player` who connected to the server
 
 
 @dataclass(frozen=True, slots=True)
 class PlayerLeaveEvent(Event):
-    player: Player
+    player: Player  #: the :class:`Player` who disconnected from the server
 
 
 @dataclass(frozen=True, slots=True)
 class PlayerDeathEvent(Event):
-    player: Player
-    deathMessage: str
+    player: Player  #: the :class:`Player` who died
+    deathMessage: str  #: the message the killed player received
 
 
 @dataclass(frozen=True, slots=True)
 class ChatEvent(Event):
-    player: Player
-    message: str
+    player: Player  #: the :class:`Player` who sent the chat message
+    message: str  #: the message sent in chat
 
 
 @dataclass(frozen=True, slots=True)
 class BlockHitEvent(Event):
-    player: Player
-    right_hand: bool
-    held_item: str
-    pos: Vec3
-    face: DIRECTION
+    player: Player  #: the :class:`Player` who clicked on a block
+    right_hand: bool  #: whether the player used their right hand instead of their left
+    held_item: str  #: the item held in that players hand that clicked the block
+    pos: Vec3  #: the position of the block that was clicked
+    face: DIRECTION  #: the face/side of the block that was clicked
 
 
 @dataclass(frozen=True, slots=True)
 class ProjectileHitEvent(Event):
-    player: Player
-    target: Player | Entity | str
-    projectile_type: str
-    pos: Vec3
-    face: DIRECTION | None
+    player: Player  #: the :class:`Player` that shot/used the projectile
+    target: Player | Entity | str  #: the target hit, use `target_block`, `target_entity` and `target_player` for details what was hit
+    projectile_type: str  #: the type of projectile that was used
+    pos: Vec3  #: the position where the projectile hit something. In case a block was hit, this is the block position that was hit
+    face: DIRECTION | None  #: the face/side of the block hit, None if an entity or player was hit instead
 
     @property
     def target_player(self) -> Player | None:
+        "Returns the target :class:`Player` if a player was hit, None otherwise"
         if isinstance(self.target, Player):
             # assert self.face is None
             return self.target
@@ -100,6 +101,7 @@ class ProjectileHitEvent(Event):
 
     @property
     def target_entity(self) -> Entity | None:
+        "Returns the target :class:`Entity` if a *non-player* entity was hit, None otherwise"
         if isinstance(self.target, Entity) and self.target_player is None:
             # assert self.face is None
             return self.target
@@ -107,6 +109,7 @@ class ProjectileHitEvent(Event):
 
     @property
     def target_block(self) -> str | None:
+        "Returns the target block id if a block was hit, None otherwise"
         if isinstance(self.target, str):
             # assert self.face is not None
             return self.target
@@ -257,7 +260,7 @@ class _EventHandler(_HasStub, _EntityProvider, _PlayerProvider):
 
     - **Polling:**
 
-      The corresponding poll*EventName* function can be called to receive the events of that type since the last call to it.
+      The corresponding poll*EventName* function can be called to receive the events of that type since the last call to that poll function.
 
       .. code-block:: python
 
@@ -285,7 +288,7 @@ class _EventHandler(_HasStub, _EntityProvider, _PlayerProvider):
     .. note::
 
        In both cases, events will only be captured *after the first call* of either poll*EventName* or registerCallback*EventName*
-       and indefinitly until :func:`stopEventPollingAndClearCallbacks` is called.
+       and indefinitly afterwards until :func:`stopEventPollingAndClearCallbacks` is called.
 
     """
 
