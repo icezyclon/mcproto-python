@@ -62,6 +62,7 @@ Player
 ======
 
 .. autoclass:: mcpb.player.Player
+   :inherited-members:
 
 -----
 

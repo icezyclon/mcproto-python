@@ -6,8 +6,8 @@
 import sys
 from pathlib import Path
 
-# add root/docs for finding stubs
-# sys.path.insert(0, Path(__file__).parent.resolve().as_posix())
+# add root/docs for finding stubs and custom extension
+sys.path.insert(0, Path(__file__).parent.resolve().as_posix())
 # add root for finding module mcpb
 sys.path.insert(0, Path(__file__).parents[1].resolve().as_posix())
 
@@ -26,7 +26,7 @@ extensions = [
     # "sphinx.ext.napoleon",
     "sphinx.ext.autodoc",
     "sphinx.ext.autodoc.typehints",
-    # "my_extension",
+    "my_extension",
     # "sphinx_autodoc_typehints",
     # "sphinx.ext.viewcode",
     # "sphinx.ext.autosectionlabel",

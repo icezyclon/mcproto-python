@@ -1,8 +1,14 @@
 from contextlib import contextmanager
+from functools import partial
+from pathlib import Path
 
 from docutils import nodes
 from docutils.parsers.rst import Directive
 from sphinx.ext.autodoc import ClassDocumenter, MethodDocumenter
+
+filename = Path(__file__).stem
+
+print = partial(print, f"[{filename}]:")
 
 
 @contextmanager
@@ -43,10 +49,17 @@ def process_signature(app, what, name, obj, options, signature, return_annotatio
     - return_annotation: The return type annotation (if any)
     """
     # Modify the signature or return_annotation as needed
-    if what == "method" and name:
+    if what == "class" and name:
         # print(obj)
-        print("METHOD:", name)
-        name = "lol"
+        classname = (name.split(".")[-1] if "." in name else name).strip()
+        args = signature.split(",")
+        types = [sig.split(":")[1] for sig in args if ":" in sig]
+        lasts = [t.split(".")[-1] if "." in t else t for t in types]
+        lasts = [l.strip() for l in lasts]
+        if classname.startswith("_") or any(l.startswith("_") for l in lasts):
+            print(f"Delete signature of {classname}")
+            signature = ""
+
     # signature = "(custom_arg1, custom_arg2)"
     # return_annotation = "-> CustomReturnType"
     # print(signature, return_annotation)
@@ -139,6 +152,7 @@ def setup(app):
     # app.add_directive("currentmodule", CurrentModuleDirective, override=True)
     # app.add_autodocumenter(CustomMethodDocumenter)
 
-    app.add_autodocumenter(CustomClassDocumenter)
+    # app.add_autodocumenter(CustomClassDocumenter)
+    app.connect("autodoc-process-signature", process_signature)
 
     pass

@@ -19,6 +19,50 @@ ALLOW_OFFLINE_PLAYER_OPS = True
 
 
 class Player(Entity, _HasStub):
+    """The :class:`Player` class represents a player on the server.
+    It can be used to query information about the player or manipulate them, such as
+    getting or setting their position, orientation, world, gamemode and more.
+
+    Do not instantiate the :class:`Player` class directly but use one of the following methods instead:
+
+    .. code-block:: python
+
+       player = mc.getPlayer()  # get any online "default" player
+       players = mc.getPlayers()  # get list of all online players
+       playerfoo = mc.getOfflinePlayer("foo")  # get player with name 'foo' even if offline
+
+    Once you have your players you can use them in a multitude of ways:
+
+    .. code-block:: python
+
+       player.pos  # get the current position of player
+       player.pos = Vec3(0, 0, 0)  # teleport player to origin
+       player.world  # get current world the player is in
+       player.world = mc.end  # teleport player into end
+       player.facing  # get direction player is currently looking at as directional vector
+       player.facing = Vec3().east()  # make player face straight east
+       player.kill()  # kill player
+       player.creative()  # change player gamemode to creative
+       player.giveItems("snowball", 64)  # give player 64 snowballs into inventory
+       player.giveEffect("glowing", 5)  # give player glowing for 5 seconds
+       player.runCommand("clear")  # run command as player and clear player inventory
+       ...
+
+    .. note::
+
+       Whether or not exceptions from operations on *offline* players are ignored is controlled by the global variable ``mcpb.player.ALLOW_OFFLINE_PLAYER_OPS``, which is True by default.
+       Players can go offline at any time and checking with :attr:`online` before every operation will still not guarantee that the player is online by the time the operation is received by the server.
+       To make life easier all PlayerNotFound exceptions will be cought and ignored if ``mcpb.player.ALLOW_OFFLINE_PLAYER_OPS`` is True.
+       Note that this will make it look like the operation succeeded, even if the player was (already) offline.
+       Use :class:`PlayerJoinEvent`, :class:`PlayerLeaveEvent` or update your online players regularly with ``mc.getPlayers()`` to control the state of your online players.
+
+    .. note::
+
+       The number of times the player data will be updated is controlled by the global variable ``mcpb.player.CACHE_PLAYER_TIME``, which is 0.2 by default.
+       This means, using a player's position will initially query the position from the server but then use this position for 0.2 seconds before updating the position again (as long as the position is not set in the mean time). The same holds true for all other properties of the player.
+       This improves performance but may also cause bugs or problems if the interval in which the up-to-date position is requred is lower than ``mcpb.player.CACHE_PLAYER_TIME``.
+    """
+
     def __init__(self, stub: MinecraftStub, worldhub: _WorldHub, name: str) -> None:
         if not isinstance(name, str):
             raise TypeError("Player name must be of type str")
@@ -26,14 +70,17 @@ class Player(Entity, _HasStub):
 
     @property
     def name(self) -> str:
+        "The name of this player, equivalent to :attr:`id`"
         return self._id
 
     @property
     def type(self) -> str:
+        """The type of the player, is always ``"player"``"""
         return "player"
 
     @property
     def online(self) -> bool:
+        "Whether the player is currently online"
         if self._should_update():
             self._update(allow_offline=True)
             # TODO: online being True does not give any guarantees
@@ -41,6 +88,7 @@ class Player(Entity, _HasStub):
 
     @property
     def loaded(self) -> bool:
+        "Not applicable to player, use :attr:`online` instead"
         raise AttributeError("Loaded does not work on Players, use .online() instead")
 
     def __repr__(self) -> str:
@@ -78,25 +126,44 @@ class Player(Entity, _HasStub):
 
     # functions working on entity but not player
     def remove(self) -> None:
+        "Not applicable to player, use :func:`kill` or :func:`kick` instead"
         raise AttributeError("Remove cannot be used on a Player")
 
     # functions only for players
     def gamemode(self, mode: Literal["adventure", "creative", "spectator", "survival"]) -> None:
+        """Set the players gamemode to `mode`
+
+        :param mode: the gamemode the player should be set to
+        :type mode: Literal[&quot;adventure&quot;, &quot;creative&quot;, &quot;spectator&quot;, &quot;survival&quot;]
+        """
         self.runCommand(f"gamemode {mode}")
 
     def adventure(self) -> None:
+        """Equivalent to :func:`gamemode` with argument ``"adventure"``"""
         self.gamemode("adventure")
 
     def creative(self) -> None:
+        """Equivalent to :func:`gamemode` with argument ``"creative"``"""
         self.gamemode("creative")
 
     def spectator(self) -> None:
+        """Equivalent to :func:`gamemode` with argument ``"spectator"``"""
         self.gamemode("spectator")
 
     def survival(self) -> None:
+        """Equivalent to :func:`gamemode` with argument ``"survival"``"""
         self.gamemode("survival")
 
     def giveItems(self, type: str, amount: int = 1, nbt: NBT | None = None) -> None:
+        """Put items into the player's inventory
+
+        :param type: id of item or block to receive
+        :type type: str
+        :param amount: amount of items to receive, defaults to 1
+        :type amount: int, optional
+        :param nbt: additional nbt data of items, defaults to None
+        :type nbt: NBT | None, optional
+        """
         if nbt is None:
             self.runCommand(f"give @s {type} {amount}")
         else:

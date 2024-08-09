@@ -5,7 +5,7 @@ import time
 from dataclasses import dataclass, field
 from functools import partial
 from itertools import repeat
-from queue import Empty, Full, Queue, SimpleQueue
+from queue import Empty, Full, Queue
 from threading import Thread
 from typing import Callable
 
@@ -49,51 +49,55 @@ WARN_DROPPED_INTERVAL: int = (
 class Event:
     timestamp: float = field(
         init=False, repr=False, compare=True, hash=False, default_factory=time.time
-    )  #: the timestamp when the event was received. Will be used for sorting events by default
+    )  #: The timestamp when the event was received. Will be used for sorting events by default
 
 
 @dataclass(frozen=True, slots=True)
 class PlayerJoinEvent(Event):
-    player: Player  #: the :class:`Player` who connected to the server
+    player: Player  #: The :class:`Player` who connected to the server
 
 
 @dataclass(frozen=True, slots=True)
 class PlayerLeaveEvent(Event):
-    player: Player  #: the :class:`Player` who disconnected from the server
+    player: Player  #: The :class:`Player` who disconnected from the server
 
 
 @dataclass(frozen=True, slots=True)
 class PlayerDeathEvent(Event):
-    player: Player  #: the :class:`Player` who died
-    deathMessage: str  #: the message the killed player received
+    player: Player  #: The :class:`Player` who died
+    deathMessage: str  #: The death message the player received
 
 
 @dataclass(frozen=True, slots=True)
 class ChatEvent(Event):
-    player: Player  #: the :class:`Player` who sent the chat message
-    message: str  #: the message sent in chat
+    player: Player  #: The :class:`Player` who sent the chat message
+    message: str  #: The message sent in chat
 
 
 @dataclass(frozen=True, slots=True)
 class BlockHitEvent(Event):
-    player: Player  #: the :class:`Player` who clicked on a block
-    right_hand: bool  #: whether the player used their right hand instead of their left
-    held_item: str  #: the item held in that players hand that clicked the block
-    pos: Vec3  #: the position of the block that was clicked
-    face: DIRECTION  #: the face/side of the block that was clicked
+    player: Player  #: The :class:`Player` who clicked on a block
+    right_hand: bool  #: Whether the player used their right hand instead of their left
+    held_item: str  #: The item held in that players hand that clicked the block
+    pos: Vec3  #: The :class:`Vec3` position of the block that was clicked
+    face: DIRECTION  #: The face/side of the block that was clicked
 
 
 @dataclass(frozen=True, slots=True)
 class ProjectileHitEvent(Event):
-    player: Player  #: the :class:`Player` that shot/used the projectile
-    target: Player | Entity | str  #: the target hit, use `target_block`, `target_entity` and `target_player` for details what was hit
-    projectile_type: str  #: the type of projectile that was used
-    pos: Vec3  #: the position where the projectile hit something. In case a block was hit, this is the block position that was hit
-    face: DIRECTION | None  #: the face/side of the block hit, None if an entity or player was hit instead
+    player: Player  #: The :class:`Player` that shot/used the projectile
+    target: (
+        Player | Entity | str
+    )  #: The target hit, use `target_block`, `target_entity` and `target_player` for details what was hit
+    projectile_type: str  #: The type of projectile that was used
+    pos: Vec3  #: The :class:`Vec3` position where the projectile hit something. In case a block was hit, this is the block position that was hit
+    face: (
+        DIRECTION | None
+    )  #: The face/side of the block hit, None if an entity or player was hit instead
 
     @property
     def target_player(self) -> Player | None:
-        "Returns the target :class:`Player` if a player was hit, None otherwise"
+        "The target :class:`Player` if a player was hit, None otherwise"
         if isinstance(self.target, Player):
             # assert self.face is None
             return self.target
@@ -101,7 +105,7 @@ class ProjectileHitEvent(Event):
 
     @property
     def target_entity(self) -> Entity | None:
-        "Returns the target :class:`Entity` if a *non-player* entity was hit, None otherwise"
+        "The target :class:`Entity` if a *non-player* entity was hit, None otherwise"
         if isinstance(self.target, Entity) and self.target_player is None:
             # assert self.face is None
             return self.target
@@ -109,7 +113,7 @@ class ProjectileHitEvent(Event):
 
     @property
     def target_block(self) -> str | None:
-        "Returns the target block id if a block was hit, None otherwise"
+        "The target block id if a block was hit, None otherwise"
         if isinstance(self.target, str):
             # assert self.face is not None
             return self.target
