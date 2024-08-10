@@ -353,6 +353,15 @@ class World(_DefaultWorld, _HasStub, _EntityProvider):
         return f"{self.__class__.__name__}(key={self.key})"
 
     def runCommand(self, command: str) -> None:
+        """Run the `command` as if it was typed in chat as ``/``-command and executed in this specific world/dimension..
+
+        .. code-block:: python
+
+           world.runCommand("kill @e")  # kill all loaded entities in this world
+
+        :param command: the command without the slash ``/``
+        :type command: str
+        """
         command = f"execute in {self.key} run " + command
         return super().runCommand(command)
 

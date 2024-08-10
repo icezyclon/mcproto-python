@@ -16,7 +16,6 @@ repos:
     hooks:
       - id: check-ast
       - id: check-case-conflict
-      - id: check-docstring-first
       - id: check-executables-have-shebangs
       - id: check-shebang-scripts-are-executable
       - id: check-merge-conflict
@@ -29,6 +28,7 @@ repos:
         name: run-tests
         entry: pytest .
         language: python
-        additional_dependencies: [pre-commit, pytest, pytest-mock, pytest-timeout, grpcio, protobuf]
+        additional_dependencies:
+          [pre-commit, pytest, pytest-mock, pytest-timeout, grpcio, protobuf]
         always_run: true
         pass_filenames: false

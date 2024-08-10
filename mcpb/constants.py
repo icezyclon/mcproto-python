@@ -1,19 +1,3 @@
-__all__ = [
-    "EAST",
-    "SOUTH",
-    "WEST",
-    "NORTH",
-    "UP",
-    "DOWN",
-    # Deutsche Konstanten
-    "OST",
-    "SÜD",
-    "WEST",
-    "NORD",
-    "OBEN",
-    "UNTEN",
-]
-
 EAST = "east"
 SOUTH = "south"
 WEST = "west"
@@ -25,7 +9,7 @@ DOWN = "down"
 
 OST = EAST
 SÜD = SOUTH
-WEST = WEST
+# WEST = WEST
 NORD = NORTH
 OBEN = UP
 UNTEN = DOWN

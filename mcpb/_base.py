@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 class _HasStub:
-    """Run general, server-wide commands as if typed in chat."""
+    """General, server-wide commands and settings."""
 
     def __init__(self, stub: MinecraftStub) -> None:
         if not isinstance(stub, MinecraftStub):

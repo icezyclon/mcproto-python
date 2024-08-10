@@ -153,7 +153,7 @@ class Entity(_HasStub):
 
         .. code-block:: python
 
-           entity.runCommand("kill")  # would kill this entity
+           entity.runCommand("kill")  # kill this entity
            entity.runCommand("effect give @s glowing")  # @s refers to this entity
 
         :param command: the command without the slash ``/``

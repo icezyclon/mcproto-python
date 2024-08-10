@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import atexit
 import logging
 
 import grpc
@@ -39,7 +38,7 @@ class Minecraft(_DefaultWorld, _EventHandler, _PlayerCache, _EntityCache, _World
     .. warning::
 
        The connection used by the server is not encrypted or otherwise secured, meaning that any man-in-the-middle can read and modify any information sent between the program and the Minecraft server.
-       For security reasons it is recommended to connect from the same host as the server. By default, the plugin does only allow connections from ``localhost`` to prevent access and exploits from third parties.
+       For security reasons it is recommended to connect from the same host as the server is running on. By default, the plugin does only allow connections from ``localhost`` to prevent access from third parties.
 
     """
 
@@ -77,14 +76,22 @@ class Minecraft(_DefaultWorld, _EventHandler, _PlayerCache, _EntityCache, _World
         """Print `objects` in chat separated by `sep`.
         All objects are converted to strings using :func:`str()` first.
 
-        >>> mc.postToChat("Hello Minecraft")
-        >>> mc.postToChat("Players online:", mc.getPlayers())
+        .. code-block:: python
+
+           mc.postToChat("Hello Minecraft")
+           mc.postToChat("Players online:", mc.getPlayers())
 
         You can also use the module `mcpb.text` to color or markup your chat messages.
 
-        >>> from mcpb.text import *  # RED, BLUE, BOLD, RESET ...
-        >>> mc.postToChat(RED + BOLD + "super " + RESET + BLUE + "cool!")
-        >>> # prints "super cool!", where "super" is red and bold, and "cool!" is blue
+        .. code-block:: python
+
+           from mcpb.text import *  # RED, BLUE, BOLD, RESET ...
+           mc.postToChat(RED + BOLD + "super " + RESET + BLUE + "cool!")
+           # prints "super cool!", where "super" is red and bold, and "cool!" is blue
+
+           # or alternatively, in order to not mix up your namespaces (especially `mcpb.colors`)
+           from mcpb import text
+           mc.postToChat(text.RED + text.BOLD + "super " + text.RESET + text.BLUE + "cool!")
 
         :param sep: the separated between each object, defaults to " "
         :type sep: str, optional

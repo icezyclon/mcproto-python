@@ -1,17 +1,3 @@
-"""In diesem Modul befinden sich die Farben und Effekte die auf Text in Minecraft
-angewendet werden können.
-
-Dies funktioniert Beispielsweise für den Chat oder für Schilder.
-
->>> from mcpb.text import *
->>> mc.postToChat(ROT + FETT + "Hallo Python!" + RESET)
-
-oder
-
->>> from mcpb import text
->>> mc.postToChat(text.ROT + text.FETT + "Hallo Python!" + text.RESET)
-"""
-
 BLACK = "§0"
 DARK_BLUE = "§1"
 DARK_GREEN = "§2"

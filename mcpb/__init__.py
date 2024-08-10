@@ -5,6 +5,7 @@ try:
 except _metalib.PackageNotFoundError:
     __version__ = "0.0.0.0.0"
 
+
 from . import colors, text
 from .constants import *  # All Constants
 from .entity import Entity

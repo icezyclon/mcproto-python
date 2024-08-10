@@ -1,4 +1,4 @@
-from mcpb import Entity, Event, MCPBFehler, Minecraft, Player, Vec3, World
+from mcpb import Entity, Event, MCPBError, Minecraft, Player, Vec3, World
 
 
 def test_mc_creation():
@@ -15,7 +15,7 @@ def test_annotate_imports():
     mc = Minecraft
     e = Entity
     ev = Event
-    exc = MCPBFehler
+    exc = MCPBError
     p = Player
     v = Vec3
     w = World

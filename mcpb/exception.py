@@ -1,129 +1,184 @@
 from ._proto import minecraft_pb2 as pb
+from .language import use_german
 
 __all__ = [
-    "MCPBFehler",
-    "UnbekannterFehler",
-    "FehlendesArgument",
-    "UngültigesArgument",
-    "NichtImplementiert",
-    "WeltNichtGefunden",
-    "SpielerNichtGefunden",
-    "BlockTypNichtGefunden",
-    "WesenTypNichtGefunden",
-    "WesenNichtSpawnbar",
-    "WesenNichtGefunden",
+    "MCPBError",
+    "UnknownError",
+    "MissingArgument",
+    "InvalidArgument",
+    "NotImplementedOrAvailable",
+    "WorldNotFound",
+    "PlayerNotFound",
+    "BlockTypeNotFound",
+    "EntityTypeNotFound",
+    "EntityNotSpawnable",
+    "EntityNotFound",
 ]
 
 
-class MCPBFehler(Exception):
+class MCPBError(Exception):
     pass
 
 
-class UnbekannterFehler(MCPBFehler):
+class UnknownError(MCPBError):
     pass
 
 
-class FehlendesArgument(MCPBFehler):
+class MissingArgument(MCPBError):
     pass
 
 
-class UngültigesArgument(MCPBFehler):
+class InvalidArgument(MCPBError):
     pass
 
 
-class NichtImplementiert(MCPBFehler):
+class NotImplementedOrAvailable(MCPBError):
     pass
 
 
-class WeltNichtGefunden(MCPBFehler):
+class WorldNotFound(MCPBError):
     pass
 
 
-class SpielerNichtGefunden(MCPBFehler):
+class PlayerNotFound(MCPBError):
     pass
 
 
-class BlockTypNichtGefunden(MCPBFehler):
+class BlockTypeNotFound(MCPBError):
     pass
 
 
-class WesenTypNichtGefunden(MCPBFehler):
+class EntityTypeNotFound(MCPBError):
     pass
 
 
-class WesenNichtSpawnbar(MCPBFehler):
+class EntityNotSpawnable(MCPBError):
     pass
 
 
-class WesenNichtGefunden(MCPBFehler):
+class EntityNotFound(MCPBError):
     pass
 
 
-# Mapping muss mit Fehlernummern in .proto übereinstimmen
-exc = {
+# Mapping must correspond to .proto errors
+exc_de = {
     1: (
-        UnbekannterFehler,
+        UnknownError,
         "Ein unbekannter Fehler ist aufgetreten",
         "Ein unbekannter Fehler ist mit '{}' aufgetreten",
     ),
     2: (
-        FehlendesArgument,
-        "Ein Argument wurde hat gefehlt",
+        MissingArgument,
+        "Ein Argument war nicht gesetzt oder hat gefehlt",
         "Das Argument '{}' war nicht gesetzt oder hat gefehlt",
     ),
     3: (
-        UngültigesArgument,
+        InvalidArgument,
         "Ein Argument war ungültig oder wurde falsch verwendet",
         "Das Argument '{}' war ungültig oder wurde falsch verwendet",
     ),
     4: (
-        NichtImplementiert,
+        NotImplementedOrAvailable,
         "Die Verwendung einer Funktion oder eines Feldes wurde noch nicht implementiert",
         "Die Verwendung von Funktion oder Feld '{}' wurde noch nicht implementiert",
     ),
     5: (
-        WeltNichtGefunden,
+        WorldNotFound,
         "Eine angegebene Welt konnte nicht gefunden werden",
         "Die Welt '{}' konnte nicht gefunden werden",
     ),
     6: (
-        SpielerNichtGefunden,
-        "Ein Spieler konnte nicht gefunden werden",
-        "Der Spieler '{}' konnte nicht gefunden werden (vielleicht ist er offline?)",
+        PlayerNotFound,
+        "Ein Spieler konnte nicht gefunden werden (vielleicht offline?)",
+        "Der Spieler '{}' konnte nicht gefunden werden (vielleicht offline?)",
     ),
     7: (
-        BlockTypNichtGefunden,
+        BlockTypeNotFound,
         "Ein angegebener Blocktyp konnte nicht gefunden werden",
         "'{}' entspricht keinem bekannten Blocktyp",
     ),
     8: (
-        WesenTypNichtGefunden,
+        EntityTypeNotFound,
         "Ein angegebener Wesentyp konnte nicht gefunden werden",
         "'{}' entspricht keinem bekannten Wesentyp",
     ),
     9: (
-        WesenNichtSpawnbar,
+        EntityNotSpawnable,
         "Ein angegebenes Wesen ist nicht spawnbar",
         "'{}' ist nicht spawnbar",
     ),
     10: (
-        WesenNichtGefunden,
+        EntityNotFound,
         "Ein angegebenes Wesen konnte nicht gefunden werden",
         "Das Wesen mit id '{}' konnte nicht gefunden werden",
     ),
 }
 
+# Mapping must correspond to .proto errors
+exc_en = {
+    1: (
+        UnknownError,
+        "An unknown error occured",
+        "An unknown error occured with '{}'",
+    ),
+    2: (
+        MissingArgument,
+        "An argument was missing",
+        "The argument '{}' was missing",
+    ),
+    3: (
+        InvalidArgument,
+        "An argument was invalid or was used incorrectly",
+        "The argument '{}' was invalid or was used incorrectly",
+    ),
+    4: (
+        NotImplementedOrAvailable,
+        "The usage of a function or of an attribute was not implemented",
+        "The usage of the function or attribute '{}' was not implemented",
+    ),
+    5: (
+        WorldNotFound,
+        "A specified world does not exist",
+        "The world '{}' does not exist",
+    ),
+    6: (
+        PlayerNotFound,
+        "A player does not exist (maybe offline?)",
+        "The player '{}' does not exist (maybe offline?)",
+    ),
+    7: (
+        BlockTypeNotFound,
+        "A specified block type does not exist",
+        "The block type '{}' does not exist",
+    ),
+    8: (
+        EntityTypeNotFound,
+        "A specified entity type does not exist",
+        "The entity type '{}' does not exist",
+    ),
+    9: (
+        EntityNotSpawnable,
+        "A specified entity is not spawnable",
+        "The entity '{}' is not spawnable",
+    ),
+    10: (
+        EntityNotFound,
+        "A specified entity does not exist",
+        "The entity with id '{}' does not exist",
+    ),
+}
+
 
 def exception_from_status(status: pb.Status) -> Exception:
+    exc = exc_de if use_german() else exc_en
     if status.code in exc.keys():
         e, default, default_extra = exc[status.code]
-        print("Status Extra:", status.extra)
         if status.extra:
             return e(default_extra.format(status.extra))
         else:
             return e(default)
     else:
-        return NotImplementedError(f"Der Fehlercode {status.code} wurde nocht nicht implementiert")
+        return NotImplementedError(f"The error code {status.code} is not implemented")
 
 
 def raise_on_error(status: pb.Status) -> None:
