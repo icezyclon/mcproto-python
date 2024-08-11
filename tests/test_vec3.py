@@ -6,10 +6,10 @@ import pytest
 from mcpb import Vec3
 
 
-def close(a, b) -> bool:
+def close(a, b, abs_tol=10**-6) -> bool:
     if isinstance(a, Number) and isinstance(b, Number):
-        return math.isclose(a, b, abs_tol=10**-6)
-    return all(math.isclose(i, j, abs_tol=10**-6) for i, j in zip(a, b, strict=True))
+        return math.isclose(a, b, abs_tol=abs_tol)
+    return all(math.isclose(i, j, abs_tol=abs_tol) for i, j in zip(a, b, strict=True))
 
 
 def test_close() -> None:
@@ -355,6 +355,43 @@ def test_map() -> None:
     assert v.map_pairwise(operator.pow, w) == Vec3(v.x**w.x, v.y**w.y, v.z**w.z)
 
 
+def test_angle() -> None:
+    def rad_degree_check(v1, v2, angle):
+        # TODO: closeness strongly reduced for this test (make calculations more precise?)
+        assert close(v1.angle_rad(v2), math.radians(angle), abs_tol=1)
+        assert close(v2.angle_rad(v1), math.radians(angle), abs_tol=1)
+        assert close(v1.angle(v2), angle, abs_tol=1)
+        assert close(v2.angle(v1), angle, abs_tol=1)
+
+    rad_degree_check(Vec3().east(), Vec3().up(), 90)
+    rad_degree_check(Vec3().east(), Vec3().south(), 90)
+    rad_degree_check(Vec3().east(), Vec3().north(), 90)
+    rad_degree_check(Vec3().east(), Vec3().down(), 90)
+
+    rad_degree_check(Vec3().west().down(), Vec3().west().up(), 90)
+    rad_degree_check(Vec3().west().down(), Vec3().east().down(), 90)
+
+    rad_degree_check(Vec3().east().up(), Vec3().up(), 45)
+    rad_degree_check(Vec3().east().up(), Vec3().east(), 45)
+
+    rad_degree_check(Vec3().east().up(), Vec3().east().up(), 0)
+    rad_degree_check(Vec3().east(12), Vec3().east(5), 0)
+    with pytest.raises(ZeroDivisionError):
+        rad_degree_check(Vec3().east().up(), Vec3(), 0)
+    with pytest.raises(ZeroDivisionError):
+        rad_degree_check(Vec3(), Vec3(), 0)
+
+    rad_degree_check(Vec3().east(), Vec3().west(), 180)
+    rad_degree_check(Vec3().up(), Vec3().down(), 180)
+    rad_degree_check(Vec3().south(), Vec3().north(), 180)
+    rad_degree_check(Vec3().east().up().south(), Vec3().west().down().north(), 180)
+
+    v = Vec3(1, -2, 3.3)
+    k = Vec3(5, 1, -1)
+    for i in range(5, 180, 5):
+        rad_degree_check(v, v.rotate(k, i), i)
+
+
 def test_rotate() -> None:
     from math import radians
 
@@ -585,7 +622,10 @@ def test_yaw_pitch() -> None:
     # yaw: -180..179.99 (-180 north, -90 east, 0 south, 90 west)
     # pitch -90..90 (-90 up, 0 straight, 90 down)
     def check_pair(a: float | int, b: float | int) -> None:
-        assert close(Vec3.from_yaw_pitch(a, b).yaw_pitch(), (a, b))
+        yaw, pitch = Vec3.from_yaw_pitch(a, b).yaw_pitch()
+        assert close((yaw, pitch), (a, b))
+        assert isinstance(yaw, float)
+        assert isinstance(pitch, float)
 
     check_pair(0, 0)
     check_pair(-90, 0)

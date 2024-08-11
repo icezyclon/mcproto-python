@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from threading import Thread
 from time import sleep
 
 from .. import Minecraft, Vec3, World
@@ -59,7 +60,21 @@ class Turtle:
         self._batch_time: float = 0.0
 
         self._head_pos = []
-        self._paint_head()
+        self._paint()
+
+        # Shortcuts
+        self.fd = self.forward
+        self.back = self.backward
+        self.bk = self.backward
+        self.rt = self.right
+        self.lt = self.left
+        # self.ut = self.up # same length as up itself
+        self.dt = self.down
+        self.pd = self.pendown
+        self.pu = self.penup
+        self.hh = self.hidehead
+        self.sh = self.showhead
+        self.tp = self.teleport
 
         # Deutsche Funktionsnamen
         self.vorne = self.forward
@@ -76,16 +91,15 @@ class Turtle:
         self.stift_breite = self.pensize
         self.verstecke_kopf = self.hidehead
         self.zeige_kopf = self.showhead
-        self.springe_zu = self.goto
+        self.springe_zu = self.teleport
 
-        # Kürzel
-        self.fd = self.forward
-        self.back = self.backward
-        self.bk = self.backward
-        self.rt = self.right
-        self.lt = self.left
-        # self.ut = self.up # same length as up itself
-        self.dt = self.down
+    @property
+    def pos(self) -> Vec3:
+        return self._pos
+
+    @pos.setter
+    def pos(self, pos: Vec3) -> None:
+        self.teleport(pos)
 
     @property
     def _dir_right(self) -> Vec3:
@@ -104,57 +118,77 @@ class Turtle:
         self._dir_front = self._dir_front.rotate(k, angle).norm()
         self._dir_up = self._dir_up.rotate(k, angle).norm()
 
-    def _paint_body(self) -> None:
-        if self._pendown:
-            self._set_block_list(self._body, self._body_pos)
-        elif self._show_head:
-            self._set_block_list("air", self._body_pos)
+    def _rotate_towards(self, pos: Vec3) -> None:
+        try:
+            dirv = (pos - self._pos).norm()  # leads to ZeroDivisionError if on same pos
+            self._dir_front = dirv.withY(0).norm()
+            self._dir_up = Vec3().up()
+            angle = self._dir_front.angle(dirv) * _sign(pos.y - self._pos.y)
+            self._rotate(angle, self._dir_up)
+        except ZeroDivisionError:
+            pass  # we are already at location
 
-    def _paint_head(self) -> None:
+    def _paint(self) -> None:
+        new_head = self._body_pos
+        if self._head_pos:  # if old head exists
+            if self._pendown:
+                self._set_block_list(self._body, self._head_pos)
+            else:
+                self._set_block_list("air", self._head_pos)
+            self._head_pos = []
         if self._show_head:
-            self._head_pos = self._body_pos
-            self._set_block_list(self._head, self._head_pos)
+            self._set_block_list(self._head, new_head)
+            self._head_pos = new_head  # remember head
+        elif self._pendown:
+            self._set_block_list(self._body, new_head)
 
     def home(self) -> Turtle:
-        dirv = self._home_pos - self._pos
-        self._dir_front = dirv.norm()  # TODO: use "rotate_towards" instead
-        # TODO: could interrupt during march home
-        self.forward(dirv.length())
-        self._pos = self._home_pos
+        self.goto(self._home_pos)
         self._dir_front = Vec3().east(1)
         self._dir_up = Vec3().up(1)
         return self
 
-    def goto(self, new_position: Vec3) -> Turtle:
-        self._paint_body()
-        self._pos = new_position
-        self._paint_head()
+    def goto(self, pos: Vec3) -> Turtle:
+        front, up = self._dir_front, self._dir_up
+        self._rotate_towards(pos)
+        self.forward((pos - self._pos).length())
+        self._pos = pos
+        self._dir_front, self._dir_up = front, up
+        self._paint()
+        return self
+
+    def teleport(self, pos: Vec3) -> Turtle:
+        self._pos = pos
+        self._paint()
         return self
 
     def head(self, block: str) -> Turtle:
         self._head = block
-        self._paint_head()
+        self._paint()
         return self
 
     def body(self, block: str) -> Turtle:
         self._body = block
         return self
 
-    def speed(self, speed: float | None) -> Turtle:
-        """Define how many blocks should be set in a second"""
-        if speed is None or speed > 0:
+    def speed(self, speed: float) -> Turtle:
+        """Set the speed of the turtle.
+        Roughly corresponds to the number of blocks set per second, i.e.,
+        how long the turtle waits between each step => 1 / speed.
+        Can be set to 0 for fastest, i.e., do not wait between steps.
+        """
+        if speed >= 0:
             self._speed = speed
         else:
             raise ValueError("The speed of the Turtle must be a positive number")
         return self
 
     def forward(self, by: float) -> Turtle:
-        wait = (1.0 / self._speed) if self._speed else None
+        wait = (1.0 / self._speed) if self._speed else 0
         for _ in range(int(abs(by))):
-            self._paint_body()
             self._pos = self._pos + (self._dir_front * _sign(by))
-            self._paint_head()
-            if self._speed:
+            self._paint()
+            if wait:
                 sleep(wait)
         return self
 
@@ -180,10 +214,12 @@ class Turtle:
 
     def pendown(self) -> Turtle:
         self._pendown = True
+        self._paint()
         return self
 
     def penup(self) -> Turtle:
         self._pendown = False
+        self._paint()
         return self
 
     def pensize(self, size: int) -> Turtle:
@@ -191,29 +227,28 @@ class Turtle:
             raise TypeError("The pensize must be an integer")
         if size < 1:
             raise ValueError("The pensize must be larger or equal to 1")
-        self._set_block_list("air", self._body_pos)
         self._pensize = size
-        self._paint_head()
+        self._paint()
         return self
 
     def hidehead(self) -> Turtle:
         self._show_head = False
-        self._set_block_list("air", self._body_pos)
+        self._paint()
         return self
 
     def showhead(self) -> Turtle:
         self._show_head = True
-        self._paint_head()
+        self._paint()
         return self
 
     def start_batch_mode(self, batch_time: float) -> Turtle:
         if batch_time <= 0.0:
             raise ValueError("The batch time must be a positive number")
+        if batch_time > 10:
+            raise ValueError("Your probably do not want to batch that slowly")
         if self._batch_time > 0:
             self._batch_time = batch_time
             return self
-
-        from threading import Thread
 
         def working_loop():
             while self._batch_time > 0.0:
@@ -221,15 +256,13 @@ class Turtle:
                 lists, self._batch_list = self._batch_list, []
                 self._set_block_list(self._body, lists)
 
-        def new_paint_body():
+        def new_paint():
             self._batch_list.extend(self._body_pos)
 
         self._batch_time = batch_time
-        self._old_paint_body = self._paint_body
-        self._old_paint_head = self._paint_head
+        self._old_paint = self._paint
         self._batch_list = []
-        self._paint_body = new_paint_body
-        self._paint_head = lambda: None
+        self._paint = new_paint
         self._batching_thread = Thread(target=working_loop, daemon=True)
         self._batching_thread.start()
         return self
@@ -237,8 +270,7 @@ class Turtle:
     def stop_batch_mode(self) -> Turtle:
         if self._batch_time == 0.0:
             return
-        self._paint_body = self._old_paint_body
-        self._paint_head = self._old_paint_head
+        self._paint = self._old_paint
         self._batch_time = 0.0
         self._batching_thread.join()
         self._batching_thread = None

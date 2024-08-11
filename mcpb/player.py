@@ -12,7 +12,7 @@ from .entity import Entity
 from .exception import raise_on_error
 from .nbt import NBT
 from .vec3 import Vec3
-from .world import World, _WorldHub
+from .world import _WorldHub
 
 CACHE_PLAYER_TIME = 0.2
 ALLOW_OFFLINE_PLAYER_OPS = True
@@ -22,6 +22,10 @@ class Player(Entity, _HasStub):
     """The :class:`Player` class represents a player on the server.
     It can be used to query information about the player or manipulate them, such as
     getting or setting their position, orientation, world, gamemode and more.
+
+    .. important::
+
+       The :class:`Player` is also an :class:`Entity` and can do everything :class:`Entity` can, such as :func:`teleport` and much more.
 
     Do not instantiate the :class:`Player` class directly but use one of the following methods instead:
 
@@ -41,6 +45,10 @@ class Player(Entity, _HasStub):
        player.world = mc.end  # teleport player into end
        player.facing  # get direction player is currently looking at as directional vector
        player.facing = Vec3().east()  # make player face straight east
+       # use teleport if you want to set position, facing direction and/or world at once:
+       player.teleport(pos=Vec3(0, 0, 0), world=mc.end)  # teleport player into origin in the end
+
+       # other modifiers
        player.kill()  # kill player
        player.creative()  # change player gamemode to creative
        player.giveItems("snowball", 64)  # give player 64 snowballs into inventory
@@ -111,6 +119,16 @@ class Player(Entity, _HasStub):
         self._loaded = True
         return True
 
+    def _set_entity_loc(self, entity_loc: pb.EntityLocation) -> None:
+        response = self._stub.setPlayer(
+            pb.Player(
+                name=self.name,
+                location=entity_loc,
+            )
+        )
+        if not ALLOW_OFFLINE_PLAYER_OPS or response.code != pb.PLAYER_NOT_FOUND:
+            raise_on_error(response)
+
     def _update(self, allow_offline: bool = ALLOW_OFFLINE_PLAYER_OPS) -> bool:
         response = self._stub.getPlayers(pb.PlayerRequest(names=[self.name], withLocations=True))
         if allow_offline and response.status.code == pb.PLAYER_NOT_FOUND:
@@ -123,6 +141,10 @@ class Player(Entity, _HasStub):
             return self._inject_update(p)
         else:
             raise RuntimeError("Player could not be updated and no error was raised by response")
+
+    def _update_on_check(self, allow_offline: bool = ALLOW_OFFLINE_PLAYER_OPS) -> bool:
+        if self._should_update():
+            self._update(allow_offline=allow_offline)
 
     # functions working on entity but not player
     def remove(self) -> None:
@@ -184,119 +206,6 @@ class Player(Entity, _HasStub):
 
     def deop(self) -> None:
         _HasStub.runCommand(self, f"deop {self.name}")
-
-    # properties that have different stub entpoints than entity
-    @property
-    def pos(self) -> Vec3:
-        if self._should_update():
-            self._update()
-        return self._pos
-
-    @pos.setter
-    def pos(self, pos: Vec3) -> None:
-        response = self._stub.setPlayer(
-            pb.Player(
-                name=self.name,
-                location=pb.EntityLocation(pos=pb.Vec3f(**pos.map(float).asdict())),
-            )
-        )
-        if not ALLOW_OFFLINE_PLAYER_OPS or response.code != pb.PLAYER_NOT_FOUND:
-            raise_on_error(response)
-        self._pos = pos
-
-    @property
-    def pitch(self) -> float:
-        if self._should_update():
-            self._update()
-        return self._pitch
-
-    @pitch.setter
-    def pitch(self, pitch: float) -> None:
-        if self._should_update():
-            self._update()  # due to yaw also being set
-        response = self._stub.setPlayer(
-            pb.Player(
-                name=self.name,
-                location=pb.EntityLocation(
-                    orientation=pb.EntityOrientation(yaw=self._yaw, pitch=float(pitch))
-                ),
-            )
-        )
-        if not ALLOW_OFFLINE_PLAYER_OPS or response.code != pb.PLAYER_NOT_FOUND:
-            raise_on_error(response)
-        self._pitch = pitch
-
-    @property
-    def yaw(self) -> float:
-        if self._should_update():
-            self._update()
-        return self._yaw
-
-    @yaw.setter
-    def yaw(self, yaw: float) -> None:
-        if self._should_update():
-            self._update()  # due to pitch also being set
-        response = self._stub.setPlayer(
-            pb.Player(
-                name=self.name,
-                location=pb.EntityLocation(
-                    orientation=pb.EntityOrientation(yaw=float(yaw), pitch=self._pitch)
-                ),
-            )
-        )
-        if not ALLOW_OFFLINE_PLAYER_OPS or response.code != pb.PLAYER_NOT_FOUND:
-            raise_on_error(response)
-        self._yaw = yaw
-
-    @property
-    def orientation(self) -> tuple[float, float]:
-        if self._should_update():
-            self._update()
-        return (self._yaw, self._pitch)
-
-    @orientation.setter
-    def orientation(self, orientation: tuple[float, float]) -> None:
-        response = self._stub.setPlayer(
-            pb.Player(
-                name=self.name,
-                location=pb.EntityLocation(
-                    orientation=pb.EntityOrientation(
-                        yaw=float(orientation[0]), pitch=float(orientation[1])
-                    )
-                ),
-            ),
-        )
-        if not ALLOW_OFFLINE_PLAYER_OPS or response.code != pb.PLAYER_NOT_FOUND:
-            raise_on_error(response)
-        self._yaw, self._pitch = orientation[:2]
-
-    @property
-    def world(self) -> World:
-        if self._should_update():
-            self._update()
-            if self._world is None:
-                return self._worldhub.worlds[0]  # TODO: return _DefaultWorld?
-        return self._world
-
-    @world.setter
-    def world(self, world: World | str) -> None:
-        if isinstance(world, str):
-            newworld = self._worldhub.getWorldByKey(world)
-        elif isinstance(world, World):
-            newworld = self._worldhub.getWorldByName(world.name)
-            if newworld is not world:
-                raise ValueError("World and player are not from same server")
-        else:
-            raise TypeError("World should be of type World or str")
-        response = self._stub.setPlayer(
-            pb.Player(
-                name=self.name,
-                location=pb.EntityLocation(world=pb.World(name=newworld.name)),
-            ),
-        )
-        if not ALLOW_OFFLINE_PLAYER_OPS or response.code != pb.PLAYER_NOT_FOUND:
-            raise_on_error(response)
-        self._world = newworld
 
 
 class _PlayerCache(_WorldHub, _HasStub, _PlayerProvider):

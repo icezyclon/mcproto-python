@@ -148,6 +148,15 @@ class Vec3:
         "The distance between `self` and another point-vector `v`"
         return (self - v).length()
 
+    def angle(self, v: Vec3) -> float:
+        "Get the angle between `self` and `v` in degrees (0 <= theta <= 180)"
+        return math.degrees(self.angle_rad(v))
+
+    def angle_rad(self, v: Vec3) -> float:
+        "Get the angle between `self` and `v` in radians (0 <= theta <= pi)"
+        theta = self.norm().dot(v.norm())
+        return math.acos(max(min(theta, 1), -1))
+
     def dot(self, v: Vec3) -> float:
         "The dot product between `self` and `v`, equivalent to ``self ^ v``"
         return self.x * v.x + self.y * v.y + self.z * v.z
@@ -177,7 +186,7 @@ class Vec3:
         return Vec3(func(self.x, v.x), func(self.y, v.y), func(self.z, v.z))
 
     def rotate(self, v: Vec3, degree: float) -> Vec3:
-        "Rotate `self` around vector `v` by `degrees` degrees"
+        "Rotate `self` around vector `v` by `degree` degrees"
         return self.rotate_rad(v, math.radians(degree))
 
     def rotate_rad(self, v: Vec3, phi: float) -> Vec3:
