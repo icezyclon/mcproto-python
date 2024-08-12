@@ -44,6 +44,12 @@ imagequantizer = [
   "scipy",
 ]
 
+[tool.setuptools]
+packages = [
+  "mcpb",
+  "mcproto", # old name of repo, is deprecated
+]
+
 [tool.black]
 include = '\.pyi?$'
 line-length = 99
@@ -54,14 +60,3 @@ include_trailing_comma = true
 line_length = 99
 multi_line_output = 3
 profile = "black"
-
-# [tool.mypy]
-# check_untyped_defs = true
-# disallow_any_explicit = true
-# disallow_any_expr = true
-# disallow_any_generics = true
-# disallow_untyped_defs = true
-
-# [tool.flake8]
-# max-complexity = 10
-# max-line-length = 99
