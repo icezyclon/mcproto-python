@@ -357,12 +357,34 @@ def test_map() -> None:
 
 def test_angle() -> None:
     def rad_degree_check(v1, v2, angle):
-        # TODO: closeness strongly reduced for this test (make calculations more precise?)
-        assert close(v1.angle_rad(v2), math.radians(angle), abs_tol=1)
-        assert close(v2.angle_rad(v1), math.radians(angle), abs_tol=1)
-        assert close(v1.angle(v2), angle, abs_tol=1)
-        assert close(v2.angle(v1), angle, abs_tol=1)
+        assert close(v1.angle_rad(v2), math.radians(angle))
+        assert close(v2.angle_rad(v1), math.radians(angle))
+        assert close(v1.angle(v2), angle)
+        assert close(v2.angle(v1), angle)
 
+    def check_round(v, k, stepsize=5):
+        all_close = True
+        print(f"{v=} ^ {k=}"), "Rotation will not have rotated angle as equal!"
+        assert v.angle(k) == 90
+        for i in range(0, 360 + stepsize, stepsize):
+            vp = v.rotate(k, i)
+            angle = v.angle(vp)
+            ip = i if i <= 180 else 360 - i
+            single_close = close(ip, angle)
+            # print(f"{single_close=}: {ip=} {angle=}")
+            rad_degree_check(v, vp, ip)
+            all_close = all_close and single_close
+        return all_close
+
+    # nice angle checks including zero
+    assert check_round(Vec3(1, 0, 0), Vec3(0, 1, 0))
+    assert check_round(Vec3(1, 0, 0), Vec3(0, 0, 1))
+    assert check_round(Vec3(0, 1.5, 0), Vec3(3.66, 0, 0))
+    assert check_round(Vec3(0, 1.5, 0), Vec3(0, 0, 4.5))
+    assert check_round(Vec3(0, 0, 0.33), Vec3(3.66, 0, 0))
+    assert check_round(Vec3(0, 0, 0.33), Vec3(0, 2.2, 0))
+
+    # some basic checks in addition
     rad_degree_check(Vec3().east(), Vec3().up(), 90)
     rad_degree_check(Vec3().east(), Vec3().south(), 90)
     rad_degree_check(Vec3().east(), Vec3().north(), 90)
@@ -370,26 +392,32 @@ def test_angle() -> None:
 
     rad_degree_check(Vec3().west().down(), Vec3().west().up(), 90)
     rad_degree_check(Vec3().west().down(), Vec3().east().down(), 90)
-
     rad_degree_check(Vec3().east().up(), Vec3().up(), 45)
     rad_degree_check(Vec3().east().up(), Vec3().east(), 45)
-
-    rad_degree_check(Vec3().east().up(), Vec3().east().up(), 0)
-    rad_degree_check(Vec3().east(12), Vec3().east(5), 0)
-    with pytest.raises(ZeroDivisionError):
-        rad_degree_check(Vec3().east().up(), Vec3(), 0)
-    with pytest.raises(ZeroDivisionError):
-        rad_degree_check(Vec3(), Vec3(), 0)
-
     rad_degree_check(Vec3().east(), Vec3().west(), 180)
     rad_degree_check(Vec3().up(), Vec3().down(), 180)
     rad_degree_check(Vec3().south(), Vec3().north(), 180)
     rad_degree_check(Vec3().east().up().south(), Vec3().west().down().north(), 180)
 
-    v = Vec3(1, -2, 3.3)
-    k = Vec3(5, 1, -1)
-    for i in range(5, 180, 5):
-        rad_degree_check(v, v.rotate(k, i), i)
+    # this test results in float point inprecision and fails if not rounding in angle()
+    rad_degree_check(Vec3().east().up(), Vec3().east().up(), 0)
+    rad_degree_check(Vec3().east(12), Vec3().east(5), 0)
+    assert Vec3().east(12).up().angle(Vec3().east(5).up()) > 0
+
+    # some selected angles
+    rad_degree_check(Vec3(1, 4, 2), Vec3(-2, -3, 6), 93.57459392151869900815884594557451387)
+    rad_degree_check(
+        Vec3(1, -19, 2), Vec3(-3, -3, 6), 62.00019487102253092366620570713150837736351
+    )
+    # TODO: calc higher prec
+    # rad_degree_check(Vec3(1, -1, 1.1), Vec3(1, -1, 1), 2.86357)
+    # rad_degree_check(Vec3(1, -1.4, 1.3), Vec3(1.02, -1, 1.224), 8.56129)
+
+    # zero divisions
+    with pytest.raises(ZeroDivisionError):
+        rad_degree_check(Vec3().east().up(), Vec3(), 0)
+    with pytest.raises(ZeroDivisionError):
+        rad_degree_check(Vec3(), Vec3(), 0)
 
 
 def test_rotate() -> None:

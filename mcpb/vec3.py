@@ -155,6 +155,9 @@ class Vec3:
     def angle_rad(self, v: Vec3) -> float:
         "Get the angle between `self` and `v` in radians (0 <= theta <= pi)"
         theta = self.norm().dot(v.norm())
+        # work against floating point inprecision (e.g. 0.9999999999999998 => 1)
+        # in return, this might 'break' extremly tiny rotations
+        theta = round(theta, 12)
         return math.acos(max(min(theta, 1), -1))
 
     def dot(self, v: Vec3) -> float:
